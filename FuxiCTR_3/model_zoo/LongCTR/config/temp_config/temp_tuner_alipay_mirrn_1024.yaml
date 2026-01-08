@@ -1,0 +1,36 @@
+base_config: ./config/mirrn_config/
+base_expid: MIRRN_default
+dataset_config:
+    alipay_maxlen1024:
+        data_format: parquet
+        data_root: ../../data/alipay/maxlen1024/
+        feature_cols:
+        - {active: true, dtype: int, name: user_index, type: meta, vocab_size: 529167}
+        - {active: true, dtype: int, name: item_index, type: meta, vocab_size: 2060823}
+        - {active: true, dtype: int, name: seq_len, type: meta}
+        - {active: true, dtype: int, name: item_id, source: item, type: categorical,
+            vocab_size: 2060823}
+        item_info: ../../data/alipay/maxlen1024/item_info.parquet
+        label_col: {dtype: float, name: label}
+        rebuild_dataset: false
+        test_data: ../../data/alipay/maxlen1024/test_longctr.parquet
+        train_data: ../../data/alipay/maxlen1024/train_longctr.parquet
+        user_info: ../../data/alipay/maxlen1024/user_info.parquet
+        valid_data: ../../data/alipay/maxlen1024/valid_longctr.parquet
+dataset_id: alipay_maxlen1024
+tuner_space:
+    batch_norm: false
+    batch_size: 2048
+    dnn_hidden_units:
+    - [512, 256, 128]
+    embedding_dim: [32]
+    epochs: 2
+    learning_rate: [0.001]
+    metrics:
+    - [PRAUC, AUC, logloss]
+    model_root: ./checkpoints/
+    monitor: {PRAUC: 1}
+    net_dropout: [0.1]
+    num_neg_samples: 1
+    seed: 2025
+    use_pos_weight: [true]

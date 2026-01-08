@@ -1,0 +1,6 @@
+# DLinear model hyperparameters
+
+model_params:
+  individual:
+    type: categorical
+    choices: [true, false]

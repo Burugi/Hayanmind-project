@@ -1,0 +1,93 @@
+# Multi-Experiment Configuration
+# This config defines combinations of datasets, models, and sequence lengths
+
+# Experiment combinations
+dataset_list:
+  - redkiwi32
+  # Add more datasets here
+
+model_list:
+  # - DLinear
+  # - SegRNN
+  # - Informer
+  - WPMixer
+  - TimeMixer
+  # SCINet does not support classification tasks
+  # - SCINet
+
+seq_len_list:
+  # - 64
+  # - 128
+  - 256
+  # - 512
+  # - 1024
+
+# Path templates
+data_root_template: "../FuxiCTR_3/data/{dataset_name}/maxlen{seq_len}/"
+results_root_template: "./results/{dataset_name}/{seq_len}/"
+
+# Dataset configurations
+datasets:
+  redkiwi32:
+    data: longctr
+    task_name: binary_classification
+    features: S
+    target: label
+
+  # Add more dataset configurations here
+
+# Model base configurations
+model_configs:
+  DLinear:
+    model: DLinear
+    embed: timeF
+    individual: false
+
+  SegRNN:
+    model: SegRNN
+    embed: timeF
+    seg_len: 24
+
+  Informer:
+    model: Informer
+    embed: timeF
+    factor: 1
+    distil: true
+
+  WPMixer:
+    model: WPMixer
+    embed: timeF
+
+  TimeMixer:
+    model: TimeMixer
+    embed: timeF
+    down_sampling_layers: 0
+    down_sampling_window: 1
+    channel_independence: 1
+
+  # SCINet config (currently not supporting classification)
+  # SCINet:
+  #   model: SCINet
+  #   embed: timeF
+  #   hid_size: 1.0
+  #   num_levels: 3
+  #   kernel: 5
+  #   groups: 1
+
+# Common training settings
+common_settings:
+  batch_size: 256
+  train_epochs: 10
+  patience: 2
+  learning_rate: 0.001
+  num_workers: 0
+  use_gpu: true
+  gpu: 0
+
+# Optimization settings
+optimization:
+  n_trials: 2  # Set to 2 for quick testing, increase for real experiments
+  timeout: null
+  sampler: tpe
+  metric: PRAUC
+  direction: maximize

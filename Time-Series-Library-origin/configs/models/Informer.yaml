@@ -1,0 +1,31 @@
+# Informer model hyperparameters
+
+model_params:
+  d_model:
+    type: categorical
+    choices: [64, 128, 256, 512]
+
+  n_heads:
+    type: categorical
+    choices: [2, 4, 8]
+
+  e_layers:
+    type: categorical
+    choices: [1, 2, 3]
+
+  d_layers:
+    type: categorical
+    choices: [1, 2]
+
+  d_ff:
+    type: categorical
+    choices: [128, 256, 512, 1024, 2048]
+
+  dropout:
+    type: float
+    min: 0.0
+    max: 0.5
+
+  factor:
+    type: categorical
+    choices: [1, 3, 5]

@@ -1,0 +1,5 @@
+# WPMixer model hyperparameters
+# Note: d_model, d_ff, dropout are in common_config
+# WPMixer uses common hyperparameters only
+
+model_params: {}

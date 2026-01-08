@@ -1,0 +1,15 @@
+redkiwi4_maxlen4096:
+    data_format: parquet
+    data_root: ../../data/redkiwi4/maxlen4096/
+    feature_cols:
+    - {active: true, dtype: int, name: user_index, type: meta, vocab_size: 84648}
+    - {active: true, dtype: int, name: item_index, type: meta, vocab_size: 601}
+    - {active: true, dtype: int, name: seq_len, type: meta}
+    - {active: true, dtype: int, name: item_id, source: item, type: categorical, vocab_size: 601}
+    item_info: ../../data/redkiwi4/maxlen4096/item_info.parquet
+    label_col: {dtype: float, name: label}
+    rebuild_dataset: false
+    test_data: ../../data/redkiwi4/maxlen4096/test_longctr.parquet
+    train_data: ../../data/redkiwi4/maxlen4096/train_longctr.parquet
+    user_info: ../../data/redkiwi4/maxlen4096/user_info.parquet
+    valid_data: ../../data/redkiwi4/maxlen4096/valid_longctr.parquet

@@ -1,0 +1,23 @@
+# SCINet model hyperparameters
+
+model_params:
+  hid_size:
+    type: categorical
+    choices: [0.5, 1.0, 2.0]
+
+  num_levels:
+    type: categorical
+    choices: [2, 3, 4]
+
+  kernel:
+    type: categorical
+    choices: [3, 5, 7]
+
+  dropout:
+    type: float
+    min: 0.0
+    max: 0.5
+
+  groups:
+    type: categorical
+    choices: [1, 2, 4]

@@ -1,0 +1,15 @@
+{
+    "best_params": {
+        "learning_rate": 0.000816845589476017,
+        "batch_size": 32,
+        "dropout": 0.3037724259507192,
+        "d_model": 512,
+        "d_ff": 128,
+        "n_heads": 4,
+        "e_layers": 1,
+        "individual": false
+    },
+    "best_value": 0.03881001557424733,
+    "best_trial": 1,
+    "n_trials": 2
+}

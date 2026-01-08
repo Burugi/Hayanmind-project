@@ -1,0 +1,15 @@
+alipay_maxlen2048:
+    data_format: parquet
+    data_root: ../../data/alipay/maxlen2048/
+    feature_cols:
+    - {active: true, dtype: int, name: user_index, type: meta, vocab_size: 529167}
+    - {active: true, dtype: int, name: item_index, type: meta, vocab_size: 2060823}
+    - {active: true, dtype: int, name: seq_len, type: meta}
+    - {active: true, dtype: int, name: item_id, source: item, type: categorical, vocab_size: 2060823}
+    item_info: ../../data/alipay/maxlen2048/item_info.parquet
+    label_col: {dtype: float, name: label}
+    rebuild_dataset: false
+    test_data: ../../data/alipay/maxlen2048/test_longctr.parquet
+    train_data: ../../data/alipay/maxlen2048/train_longctr.parquet
+    user_info: ../../data/alipay/maxlen2048/user_info.parquet
+    valid_data: ../../data/alipay/maxlen2048/valid_longctr.parquet

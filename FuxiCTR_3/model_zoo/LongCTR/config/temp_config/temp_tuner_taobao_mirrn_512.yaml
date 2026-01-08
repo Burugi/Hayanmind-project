@@ -1,0 +1,35 @@
+base_config: ./config/mirrn_config/
+base_expid: MIRRN_default
+dataset_config:
+    taobao_maxlen512:
+        data_format: parquet
+        data_root: ../../data/taobao/maxlen512/
+        feature_cols:
+        - {active: true, dtype: int, name: user_index, type: meta, vocab_size: 1055077}
+        - {active: true, dtype: int, name: item_index, type: meta, vocab_size: 12140}
+        - {active: true, dtype: int, name: seq_len, type: meta}
+        - {active: true, dtype: int, name: item_id, source: item, type: categorical,
+            vocab_size: 12140}
+        item_info: ../../data/taobao/maxlen512/item_info.parquet
+        label_col: {dtype: float, name: label}
+        rebuild_dataset: false
+        test_data: ../../data/taobao/maxlen512/test_longctr.parquet
+        train_data: ../../data/taobao/maxlen512/train_longctr.parquet
+        user_info: ../../data/taobao/maxlen512/user_info.parquet
+        valid_data: ../../data/taobao/maxlen512/valid_longctr.parquet
+dataset_id: taobao_maxlen512
+tuner_space:
+    batch_norm: false
+    batch_size: 2048
+    dnn_hidden_units:
+    - [256, 128, 64]
+    - [512, 256, 128]
+    embedding_dim: [16, 32]
+    epochs: 100
+    learning_rate: [0.001, 0.0005]
+    metrics:
+    - [PRAUC, AUC, logloss]
+    model_root: ./checkpoints/
+    monitor: {PRAUC: 1}
+    net_dropout: [0, 0.1, 0.2]
+    seed: 2025

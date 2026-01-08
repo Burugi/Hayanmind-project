@@ -1,0 +1,124 @@
+base_config: ./config/eta_config/
+base_expid: ETA_redkiwi
+dataset_id: redkiwi
+
+redkiwi:
+    data_root: ../../data/
+    data_format: parquet
+    train_data: ../../data/redkiwi/train_longctr.parquet
+    valid_data: ../../data/redkiwi/valid_longctr.parquet
+    test_data: ../../data/redkiwi/test_longctr.parquet
+    user_info: ../../data/redkiwi/user_info.parquet
+    item_info: ../../data/redkiwi/item_info.parquet
+    rebuild_dataset: False
+    feature_cols:
+        - {name: user_index, active: True, dtype: int, type: meta, vocab_size: 84648}
+        - {name: item_index, active: True, dtype: int, type: meta, vocab_size: 601}
+        - {name: seq_len, active: True, dtype: int, type: meta}
+        - {name: item_id, active: True, dtype: int, type: categorical, source: item, vocab_size: 601}
+    label_col: {name: label, dtype: float}
+
+alipay:
+    data_root: ../../data/
+    data_format: parquet
+    train_data: ../../data/alipay/train_longctr.parquet
+    valid_data: ../../data/alipay/valid_longctr.parquet
+    test_data: ../../data/alipay/test_longctr.parquet
+    user_info: ../../data/alipay/user_info.parquet
+    item_info: ../../data/alipay/item_info.parquet
+    rebuild_dataset: False
+    feature_cols:
+        - {name: user_index, active: True, dtype: int, type: meta, vocab_size: 529167}
+        - {name: item_index, active: True, dtype: int, type: meta, vocab_size: 2060823}
+        - {name: seq_len, active: True, dtype: int, type: meta}
+        - {name: item_id, active: True, dtype: int, type: categorical, source: item, vocab_size: 2060823}
+    label_col: {name: label, dtype: float}
+
+tmall:
+    data_root: ../../data/
+    data_format: parquet
+    train_data: ../../data/tmall/train_longctr.parquet
+    valid_data: ../../data/tmall/valid_longctr.parquet
+    test_data: ../../data/tmall/test_longctr.parquet
+    user_info: ../../data/tmall/user_info.parquet
+    item_info: ../../data/tmall/item_info.parquet
+    rebuild_dataset: False
+    feature_cols:
+        - {name: user_index, active: True, dtype: int, type: meta, vocab_size: 422633}
+        - {name: item_index, active: True, dtype: int, type: meta, vocab_size: 1025335}
+        - {name: seq_len, active: True, dtype: int, type: meta}
+        - {name: item_id, active: True, dtype: int, type: categorical, source: item, vocab_size: 1025335}
+    label_col: {name: label, dtype: float}
+
+taobao:
+    data_root: ../../data/
+    data_format: parquet
+    train_data: ../../data/taobao/train_longctr.parquet
+    valid_data: ../../data/taobao/valid_longctr.parquet
+    test_data: ../../data/taobao/test_longctr.parquet
+    user_info: ../../data/taobao/user_info.parquet
+    item_info: ../../data/taobao/item_info.parquet
+    rebuild_dataset: False
+    feature_cols:
+        - {name: user_index, active: True, dtype: int, type: meta, vocab_size: 982583}
+        - {name: item_index, active: True, dtype: int, type: meta, vocab_size: 4022483}
+        - {name: seq_len, active: True, dtype: int, type: meta}
+        - {name: item_id, active: True, dtype: int, type: categorical, source: item, vocab_size: 4022483}
+    label_col: {name: label, dtype: float}
+
+amazon:
+    data_root: ../../data/
+    data_format: parquet
+    train_data: ../../data/amazon/train_longctr.parquet
+    valid_data: ../../data/amazon/valid_longctr.parquet
+    test_data: ../../data/amazon/test_longctr.parquet
+    user_info: ../../data/amazon/user_info.parquet
+    item_info: ../../data/amazon/item_info.parquet
+    rebuild_dataset: False
+    feature_cols:
+        - {name: user_index, active: True, dtype: int, type: meta, vocab_size: 192403}
+        - {name: item_index, active: True, dtype: int, type: meta, vocab_size: 62943}
+        - {name: seq_len, active: True, dtype: int, type: meta}
+        - {name: item_id, active: True, dtype: int, type: categorical, source: item, vocab_size: 62943}
+    label_col: {name: label, dtype: float}
+
+taobao_dmr:
+    data_root: ../../data/
+    data_format: parquet
+    train_data: ../../data/taobao_dmr/train_longctr.parquet
+    valid_data: ../../data/taobao_dmr/valid_longctr.parquet
+    test_data: ../../data/taobao_dmr/test_longctr.parquet
+    user_info: ../../data/taobao_dmr/user_info.parquet
+    item_info: ../../data/taobao_dmr/item_info.parquet
+    rebuild_dataset: False
+    feature_cols:
+        - {name: user_index, active: True, dtype: int, type: meta, vocab_size: 1055077}
+        - {name: item_index, active: True, dtype: int, type: meta, vocab_size: 12140}
+        - {name: seq_len, active: True, dtype: int, type: meta}
+        - {name: item_id, active: True, dtype: int, type: categorical, source: item, vocab_size: 12140}
+    label_col: {name: label, dtype: float}
+    
+tuner_space:
+    model_root: './checkpoints/eta'
+    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    learning_rate: [1.e-3, 5.e-4]
+    seed: 2025
+    metrics: [[PRAUC, AUC, logloss]]
+    monitor: {"PRAUC": 1}
+
+# tuner_space:
+#     model_root: './checkpoints/'
+#     embedding_dim: [16, 32]
+#     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+#     attention_dim: [32, 64, 128]
+#     num_heads: [2, 4]
+#     net_dropout: [0, 0.1, 0.2]
+#     attention_dropout: [0, 0.1]
+#     topk: [20, 50, 100]
+#     short_seq_len: [10, 20]
+#     hash_bits: [16, 32]
+#     learning_rate: [1.e-3, 5.e-4]
+#     batch_size: 256
+#     seed: 2024
+#     metrics: [[PRAUC, AUC, logloss]]
+#     monitor: {"PRAUC": 1, "AUC": 1}

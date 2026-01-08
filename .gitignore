@@ -1,0 +1,15 @@
+**/.claude/
+
+# python
+__pycache__/
+
+# Experiments
+*.log
+*.pth
+**/checkpoint/
+*.csv
+
+# Dataset
+FuxiCTR_3/data/
+redkiwi_raw/
+seqCTR_dataset/

@@ -1,0 +1,15 @@
+taobao_maxlen256:
+    data_format: parquet
+    data_root: ../../data/taobao/maxlen256/
+    feature_cols:
+    - {active: true, dtype: int, name: user_index, type: meta, vocab_size: 982583}
+    - {active: true, dtype: int, name: item_index, type: meta, vocab_size: 4022483}
+    - {active: true, dtype: int, name: seq_len, type: meta}
+    - {active: true, dtype: int, name: item_id, source: item, type: categorical, vocab_size: 4022483}
+    item_info: ../../data/taobao/maxlen256/item_info.parquet
+    label_col: {dtype: float, name: label}
+    rebuild_dataset: false
+    test_data: ../../data/taobao/maxlen256/test_longctr.parquet
+    train_data: ../../data/taobao/maxlen256/train_longctr.parquet
+    user_info: ../../data/taobao/maxlen256/user_info.parquet
+    valid_data: ../../data/taobao/maxlen256/valid_longctr.parquet

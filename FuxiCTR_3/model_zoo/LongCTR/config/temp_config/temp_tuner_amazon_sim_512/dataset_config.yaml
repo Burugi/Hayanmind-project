@@ -1,0 +1,15 @@
+amazon_maxlen512:
+    data_format: parquet
+    data_root: ../../data/amazon/maxlen512/
+    feature_cols:
+    - {active: true, dtype: int, name: user_index, type: meta, vocab_size: 192403}
+    - {active: true, dtype: int, name: item_index, type: meta, vocab_size: 62943}
+    - {active: true, dtype: int, name: seq_len, type: meta}
+    - {active: true, dtype: int, name: item_id, source: item, type: categorical, vocab_size: 62943}
+    item_info: ../../data/amazon/maxlen512/item_info.parquet
+    label_col: {dtype: float, name: label}
+    rebuild_dataset: false
+    test_data: ../../data/amazon/maxlen512/test_longctr.parquet
+    train_data: ../../data/amazon/maxlen512/train_longctr.parquet
+    user_info: ../../data/amazon/maxlen512/user_info.parquet
+    valid_data: ../../data/amazon/maxlen512/valid_longctr.parquet
