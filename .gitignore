@@ -8,6 +8,7 @@ __pycache__/
 *.pth
 **/checkpoint/
 *.csv
+FuxiCTR_3/model_zoo/LongCTR/config/temp_config/
 
 # Dataset
 FuxiCTR_3/data/

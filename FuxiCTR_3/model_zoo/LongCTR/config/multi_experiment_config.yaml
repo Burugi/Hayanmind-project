@@ -10,35 +10,40 @@ dataset_list:
   # - redkiwi4
   # - redkiwi8
   # - redkiwi16
-  - redkiwi32
+  # - redkiwi32
   # - redkiwi64
-  # - redkiwi128
+  - redkiwi128
   # - redkiwi256
   # - redkiwi512
   # - redkiwi1024
   # - redkiwi2048
   # - redkiwi4096
   
-  # - alipay
-  # - tmall
-  # - taobao # CUDA error가 나는 데 확인이 필요함 -> 지금은 됨 (2026.01.03)
-  # - amazon
+  - alipay
+  - tmall
+  - taobao # CUDA error가 나는 데 확인이 필요함 -> 지금은 됨 (2026.01.03)
+  - amazon
   # - taobaodmr # -> shape 오류남 (2026.01.03)
 
 
 
 model_list:
   - mirrn
-  # - twin
-  # - sdim
-  # - eta
-  # - sim
+  - twin
+  - sdim
+  - eta
+  - sim
+  - dcnv2
+  - dien
+  - din
+  - finalmlp
+  - transact
 
 max_user_seq_len_list:
-  # - 64
-  # - 128
-  # - 256
-  # - 512
+  - 64
+  - 128
+  - 256
+  - 512
   - 1024
   # - 2048
   # - 4096
@@ -255,7 +260,7 @@ datasets:
 
 # Hyperparameter search space per model
 tuner_spaces:
-  # mirrn:
+  # example_mirrn:
   #   model_root: './checkpoints/'
   #   embedding_dim: [32]
   #   dnn_hidden_units: [[512, 256, 128]]
@@ -271,6 +276,101 @@ tuner_spaces:
   #   use_pos_weight: True  # Auto calculate pos_weight (neg/pos) for BCE loss
   #   # train_sampling: ["undersampling"]  # null, "oversampling", "undersampling"
   #   # train_sampling_ratio: 1.0  # Target ratio for oversampling/undersampling
+
+  dcnv2:
+    model_root: './checkpoints/'
+    embedding_dim: [16, 32]
+    stacked_dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    parallel_dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    num_cross_layers: [2, 3, 4]
+    net_dropout: [0, 0.1, 0.2]
+    model_structure: [parallel, stacked]
+    batch_norm: False
+    learning_rate: [1.e-3, 5.e-4]
+    batch_size: 2048
+    epochs: 50
+    seed: 42
+    metrics: [[PRAUC, AUC, logloss]]
+    monitor: {'PRAUC': 1, 'logloss': -1}
+    use_pos_weight: True  
+
+  dien:
+    model_root: './checkpoints/'
+    embedding_dim: [16, 32]
+    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    net_dropout: [0, 0.1, 0.2]
+    attention_dropout: [0, 0.1, 0.2]
+    gru_type: [AUGRU, GRU]
+    dnn_activations: Dice
+    attention_type: bilinear_attention
+    attention_hidden_units: [80, 40]
+    aux_hidden_units: [100, 50]
+    batch_norm: True
+    learning_rate: [1.e-3, 5.e-4]
+    batch_size: 2048
+    epochs: 50
+    seed: 42
+    metrics: [[PRAUC, AUC, logloss]]
+    monitor: {'PRAUC': 1, 'logloss': -1}
+    use_pos_weight: True  
+
+  din:
+    model_root: './checkpoints/'
+    embedding_dim: [16, 32]
+    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    net_dropout: [0, 0.1, 0.2]
+    attention_dropout: [0, 0.1, 0.2]
+    attention_hidden_units: [[64], [128]]
+    attention_hidden_activations: "Dice"
+    din_use_softmax: False
+    batch_norm: False
+    learning_rate: [1.e-3, 5.e-4]
+    batch_size: 2048
+    epochs: 50
+    seed: 42
+    metrics: [[PRAUC, AUC, logloss]]
+    monitor: {'PRAUC': 1, 'logloss': -1}
+    use_pos_weight: True  
+
+  finalmlp:
+    model_root: './checkpoints/'
+    embedding_dim: [16, 32]
+    mlp1_hidden_units: [[256, 128], [512, 256]]
+    mlp2_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    mlp1_dropout: [0, 0.1, 0.2]
+    mlp2_dropout: [0, 0.1, 0.2]
+    num_heads: [2, 4]
+    use_fs: True
+    fs_hidden_units: [[256, 128], [512, 256]]
+    mlp1_batch_norm: False
+    mlp2_batch_norm: False
+    learning_rate: [1.e-3, 5.e-4]
+    batch_size: 2048
+    epochs: 50
+    seed: 42
+    metrics: [[PRAUC, AUC, logloss]]
+    monitor: {'PRAUC': 1, 'logloss': -1}
+    use_pos_weight: True  
+
+  transact:
+    model_root: './checkpoints/'
+    embedding_dim: [16, 32]
+    dcn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    num_heads: [2, 4]
+    transformer_layers: [1, 2]
+    transformer_dropout: [0, 0.1, 0.2]
+    net_dropout: [0, 0.1, 0.2]
+    dcn_cross_layers: 3
+    dim_feedforward: [128, 256]
+    concat_max_pool: True
+    batch_norm: False
+    learning_rate: [1.e-3, 5.e-4]
+    batch_size: 2048
+    epochs: 50
+    seed: 42
+    metrics: [[PRAUC, AUC, logloss]]
+    monitor: {'PRAUC': 1, 'logloss': -1}
+    use_pos_weight: True  
 
   mirrn:
     model_root: './checkpoints/'
@@ -288,261 +388,100 @@ tuner_spaces:
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
     batch_size: 2048
-    epochs: 2
+    epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
-    monitor: {"PRAUC": 1}
+    monitor: {'PRAUC': 1, 'logloss': -1}
+    use_pos_weight: True  
 
   twin:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    attention_dim: [32, 64, 128]
+    num_heads: [2, 4]
     net_dropout: [0, 0.1, 0.2]
+    attention_dropout: [0, 0.1, 0.2]
+    topk: [20, 50, 100]
+    short_seq_len: [10, 20]
+    Kc_cross_features: 0
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
     batch_size: 2048
-    epochs : 100
-    seed: 2025
+    epochs: 50
+    seed: 42
     metrics: [[PRAUC, AUC, logloss]]
-    monitor: {"PRAUC": 1}
+    monitor: {'PRAUC': 1, 'logloss': -1}
+    use_pos_weight: True  
 
   sdim:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    attention_dim: [32, 64, 128]
+    num_heads: [2, 4]
     net_dropout: [0, 0.1, 0.2]
+    attention_dropout: [0, 0.1, 0.2]
+    num_hashes: [1, 2]
+    hash_bits: [4, 8]
+    short_seq_len: [10, 20]
+    use_qkvo: True
+    use_scale: True
+    reuse_hash: True
+    l2_norm: False
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
     batch_size: 2048
-    epochs : 100
-    seed: 2025
+    epochs: 50
+    seed: 42
     metrics: [[PRAUC, AUC, logloss]]
-    monitor: {"PRAUC": 1}
-
-  sim:
-    model_root: './checkpoints/'
-    embedding_dim: [16, 32]
-    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-    net_dropout: [0, 0.1, 0.2]
-    batch_norm: False
-    learning_rate: [1.e-3, 5.e-4]
-    batch_size: 2048
-    epochs : 100
-    seed: 2025
-    metrics: [[PRAUC, AUC, logloss]]
-    monitor: {"PRAUC": 1}
+    monitor: {'PRAUC': 1, 'logloss': -1}
+    use_pos_weight: True  
 
   eta:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    attention_dim: [32, 64, 128]
+    num_heads: [2, 4]
     net_dropout: [0, 0.1, 0.2]
+    attention_dropout: [0, 0.1, 0.2]
+    topk: [20, 50, 100]
+    short_seq_len: [10, 20]
+    hash_bits: [16, 32]
+    use_scale: True
+    reuse_hash: True
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
     batch_size: 2048
-    epochs : 100
-    seed: 2025
+    epochs: 50
+    seed: 42
     metrics: [[PRAUC, AUC, logloss]]
-    monitor: {"PRAUC": 1}
+    monitor: {'PRAUC': 1, 'logloss': -1}
+    use_pos_weight: True  
 
-
-# # Hyperparameter search space per model
-# tuner_spaces:
-#   dcnv2:
-#     model_root: './checkpoints/'
-#     embedding_dim: [16, 32]
-#     stacked_dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     parallel_dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     num_cross_layers: [2, 3, 4]
-#     net_dropout: [0, 0.1, 0.2]
-#     model_structure: [parallel, stacked]
-#     batch_norm: False
-#     learning_rate: [1.e-3, 5.e-4]
-#     batch_size: 2048
-#     epochs: 100
-#     seed: 42
-#     metrics: [[PRAUC, AUC, logloss]]
-#     monitor: {"PRAUC": 1}
-
-#   dien:
-#     model_root: './checkpoints/'
-#     embedding_dim: [16, 32]
-#     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     net_dropout: [0, 0.1, 0.2]
-#     attention_dropout: [0, 0.1, 0.2]
-#     gru_type: [AUGRU, GRU]
-#     dnn_activations: Dice
-#     attention_type: bilinear_attention
-#     attention_hidden_units: [80, 40]
-#     aux_hidden_units: [100, 50]
-#     batch_norm: True
-#     learning_rate: [1.e-3, 5.e-4]
-#     batch_size: 2048
-#     epochs: 100
-#     seed: 42
-#     metrics: [[PRAUC, AUC, logloss]]
-#     monitor: {"PRAUC": 1}
-
-#   din:
-#     model_root: './checkpoints/'
-#     embedding_dim: [16, 32]
-#     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     net_dropout: [0, 0.1, 0.2]
-#     attention_dropout: [0, 0.1, 0.2]
-#     attention_hidden_units: [[64], [128]]
-#     attention_hidden_activations: "Dice"
-#     din_use_softmax: False
-#     batch_norm: False
-#     learning_rate: [1.e-3, 5.e-4]
-#     batch_size: 2048
-#     epochs: 100
-#     seed: 42
-#     metrics: [[PRAUC, AUC, logloss]]
-#     monitor: {"PRAUC": 1}
-
-#   finalmlp:
-#     model_root: './checkpoints/'
-#     embedding_dim: [16, 32]
-#     mlp1_hidden_units: [[256, 128], [512, 256]]
-#     mlp2_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     mlp1_dropout: [0, 0.1, 0.2]
-#     mlp2_dropout: [0, 0.1, 0.2]
-#     num_heads: [2, 4]
-#     use_fs: True
-#     fs_hidden_units: [[256, 128], [512, 256]]
-#     mlp1_batch_norm: False
-#     mlp2_batch_norm: False
-#     learning_rate: [1.e-3, 5.e-4]
-#     batch_size: 2048
-#     epochs: 100
-#     seed: 42
-#     metrics: [[PRAUC, AUC, logloss]]
-#     monitor: {"PRAUC": 1}
-
-#   transact:
-#     model_root: './checkpoints/'
-#     embedding_dim: [16, 32]
-#     dcn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     num_heads: [2, 4]
-#     transformer_layers: [1, 2]
-#     transformer_dropout: [0, 0.1, 0.2]
-#     net_dropout: [0, 0.1, 0.2]
-#     dcn_cross_layers: 3
-#     dim_feedforward: [128, 256]
-#     concat_max_pool: True
-#     batch_norm: False
-#     learning_rate: [1.e-3, 5.e-4]
-#     batch_size: 2048
-#     epochs: 100
-#     seed: 42
-#     metrics: [[PRAUC, AUC, logloss]]
-#     monitor: {"PRAUC": 1}
-
-#   mirrn:
-#     model_root: './checkpoints/'
-#     embedding_dim: [16, 32]
-#     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     attention_dim: [32, 64, 128]
-#     num_heads: [2, 4]
-#     net_dropout: [0, 0.1, 0.2]
-#     attention_dropout: [0, 0.1, 0.2]
-#     topk: [20, 50, 100]
-#     short_seq_len: [10, 20]
-#     hash_bits: [16, 32]
-#     use_scale: True
-#     reuse_hash: True
-#     batch_norm: False
-#     learning_rate: [1.e-3, 5.e-4]
-#     batch_size: 2048
-#     epochs: 100
-#     seed: 42
-#     metrics: [[PRAUC, AUC, logloss]]
-#     monitor: {"PRAUC": 1}
-
-#   twin:
-#     model_root: './checkpoints/'
-#     embedding_dim: [16, 32]
-#     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     attention_dim: [32, 64, 128]
-#     num_heads: [2, 4]
-#     net_dropout: [0, 0.1, 0.2]
-#     attention_dropout: [0, 0.1, 0.2]
-#     topk: [20, 50, 100]
-#     short_seq_len: [10, 20]
-#     Kc_cross_features: 0
-#     batch_norm: False
-#     learning_rate: [1.e-3, 5.e-4]
-#     batch_size: 2048
-#     epochs: 100
-#     seed: 42
-#     metrics: [[PRAUC, AUC, logloss]]
-#     monitor: {"PRAUC": 1}
-
-#   sdim:
-#     model_root: './checkpoints/'
-#     embedding_dim: [16, 32]
-#     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     attention_dim: [32, 64, 128]
-#     num_heads: [2, 4]
-#     net_dropout: [0, 0.1, 0.2]
-#     attention_dropout: [0, 0.1, 0.2]
-#     num_hashes: [1, 2]
-#     hash_bits: [4, 8]
-#     short_seq_len: [10, 20]
-#     use_qkvo: True
-#     use_scale: True
-#     reuse_hash: True
-#     l2_norm: False
-#     batch_norm: False
-#     learning_rate: [1.e-3, 5.e-4]
-#     batch_size: 2048
-#     epochs: 100
-#     seed: 42
-#     metrics: [[PRAUC, AUC, logloss]]
-#     monitor: {"PRAUC": 1}
-
-#   eta:
-#     model_root: './checkpoints/'
-#     embedding_dim: [16, 32]
-#     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     attention_dim: [32, 64, 128]
-#     num_heads: [2, 4]
-#     net_dropout: [0, 0.1, 0.2]
-#     attention_dropout: [0, 0.1, 0.2]
-#     topk: [20, 50, 100]
-#     short_seq_len: [10, 20]
-#     hash_bits: [16, 32]
-#     use_scale: True
-#     reuse_hash: True
-#     batch_norm: False
-#     learning_rate: [1.e-3, 5.e-4]
-#     batch_size: 2048
-#     epochs: 100
-#     seed: 42
-#     metrics: [[PRAUC, AUC, logloss]]
-#     monitor: {"PRAUC": 1}
-
-#   sim:
-#     model_root: './checkpoints/'
-#     embedding_dim: [16, 32]
-#     dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-#     attention_dim: [32, 64, 128]
-#     num_heads: [2, 4]
-#     net_dropout: [0, 0.1, 0.2]
-#     attention_dropout: [0, 0.1, 0.2]
-#     topk: [20, 50, 100]
-#     short_seq_len: [10, 20]
-#     gsu_type: ["soft", "hard"]
-#     alpha: 1
-#     beta: 1
-#     batch_norm: False
-#     learning_rate: [1.e-3, 5.e-4]
-#     batch_size: 2048
-#     epochs: 100
-#     seed: 42
-#     metrics: [[PRAUC, AUC, logloss]]
-#     monitor: {"PRAUC": 1}
+  sim:
+    model_root: './checkpoints/'
+    embedding_dim: [16, 32]
+    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    attention_dim: [32, 64, 128]
+    num_heads: [2, 4]
+    net_dropout: [0, 0.1, 0.2]
+    attention_dropout: [0, 0.1, 0.2]
+    topk: [20, 50, 100]
+    short_seq_len: [10, 20]
+    gsu_type: ["soft", "hard"]
+    alpha: 1
+    beta: 1
+    batch_norm: False
+    learning_rate: [1.e-3, 5.e-4]
+    batch_size: 2048
+    epochs: 50
+    seed: 42
+    metrics: [[PRAUC, AUC, logloss]]
+    monitor: {'PRAUC': 1, 'logloss': -1}
+    use_pos_weight: True  
 
 
 # GPU settings
-gpu_list: [0, 3]
+gpu_list: [0] # , 1, 2, 3, 4, 5, 6, 7

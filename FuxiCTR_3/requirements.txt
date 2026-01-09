@@ -2,8 +2,9 @@ keras_preprocessing
 pandas
 PyYAML
 scikit-learn
-numpy
+numpy==1.26.4
 h5py
 tqdm
 pyarrow
 polars<=1.0.0
+torch

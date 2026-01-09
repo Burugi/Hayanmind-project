@@ -16,7 +16,7 @@
 # =========================================================================
 
 
-from sklearn.metrics import roc_auc_score, log_loss, accuracy_score, precision_recall_curve, auc, f1_score
+from sklearn.metrics import roc_auc_score, log_loss, accuracy_score, average_precision_score
 import numpy as np
 import pandas as pd
 import multiprocessing as mp
@@ -28,15 +28,14 @@ def evaluate_metrics(y_true, y_pred, metrics, group_id=None):
     group_metrics = []
     for metric in metrics:
         if metric in ['logloss', 'binary_crossentropy']:
-            return_dict[metric] = log_loss(y_true, y_pred, eps=1e-7)
+            # sklearn's log_loss doesn't accept eps parameter in newer versions
+            # Manually clip predictions to avoid log(0)
+            y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+            return_dict[metric] = log_loss(y_true, y_pred_clipped)
         elif metric == 'AUC':
             return_dict[metric] = roc_auc_score(y_true, y_pred)
-        elif metric == 'PRAUC':
-            precision, recall, _ = precision_recall_curve(y_true, y_pred)
-            return_dict[metric] = auc(recall, precision)
-        elif metric == 'F1':
-            y_pred_binary = (y_pred >= 0.5).astype(int)
-            return_dict[metric] = f1_score(y_true, y_pred_binary)
+        elif metric in ['PRAUC', 'PR-AUC', 'average_precision']:
+            return_dict[metric] = average_precision_score(y_true, y_pred)
         elif metric in ["gAUC", "avgAUC", "MRR"] or metric.startswith("NDCG"):
             return_dict[metric] = 0
             group_metrics.append(metric)

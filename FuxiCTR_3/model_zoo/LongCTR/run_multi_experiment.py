@@ -131,16 +131,15 @@ def main():
     parser.add_argument('--config', type=str,
                        default='./config/multi_experiment_config.yaml',
                        help='Path to multi-experiment configuration file')
-    parser.add_argument('--gpu', nargs='+', default=[-1],
-                       help='List of GPU devices, -1 for CPU')
+
     args = vars(parser.parse_args())
 
     multi_config = load_multi_experiment_config(args['config'])
-    gpu_list = args['gpu']
 
     datasets = multi_config['dataset_list']
     models = multi_config['model_list']
     max_seq_lens = multi_config['max_user_seq_len_list']
+    gpu_list = multi_config['gpu_list']
 
     total = len(datasets) * len(models) * len(max_seq_lens)
     count = 0
