@@ -100,6 +100,7 @@ def create_base_args(dataset_config, model_config, common_settings, seq_len, roo
         'use_multi_gpu': False,
         'devices': '0,1,2,3',
         'device_ids': [0],
+        'device': f"cuda:{common_settings.get('gpu', 0)}" if common_settings.get('use_gpu', True) else 'cpu',
 
         # de-stationary projector params
         'p_hidden_dims': [128, 128],
@@ -185,21 +186,30 @@ def run_optimization(dataset, model, seq_len, multi_config):
     common_config_path = './configs/hyperopt_config.yaml'
     model_config_path = f'./configs/models/{model}.yaml'
 
+    # Parse monitor configuration
+    monitor = optimization_config.get('monitor')
+    if not monitor:
+        # Legacy support: convert old metric/direction format to monitor format
+        metric = optimization_config.get('metric', 'PRAUC')
+        direction = optimization_config.get('direction', 'maximize')
+        monitor = {metric: 1 if direction == 'maximize' else -1}
+
     optimizer = HyperparameterOptimizer(
         args=args,
         model_name=model,
         common_config_path=common_config_path,
         model_config_path=model_config_path,
         save_dir=save_dir,
-        sampler_type=optimization_config.get('sampler', 'tpe')
+        sampler_type=optimization_config.get('sampler', 'tpe'),
+        monitor=monitor
     )
 
-    best_params, best_prauc = optimizer.optimize(
+    best_params, best_monitor_score = optimizer.optimize(
         n_trials=optimization_config.get('n_trials', 20),
         timeout=optimization_config.get('timeout', None)
     )
 
-    return best_params, best_prauc
+    return best_params, best_monitor_score
 
 
 def run_final_training(dataset, model, seq_len, best_params, multi_config):
@@ -251,22 +261,68 @@ def run_final_training(dataset, model, seq_len, best_params, multi_config):
         **best_params
     }
 
+    # Cleanup: Remove checkpoint file and empty directories
+    checkpoint_dir = os.path.join('./checkpoints', setting)
+    checkpoint_file = os.path.join(checkpoint_dir, 'checkpoint.pth')
+
+    if os.path.exists(checkpoint_file):
+        os.remove(checkpoint_file)
+
+    # Remove empty checkpoint directory
+    if os.path.exists(checkpoint_dir) and not os.listdir(checkpoint_dir):
+        os.rmdir(checkpoint_dir)
+
+    # Remove empty checkpoints parent directory
+    if os.path.exists('./checkpoints') and not os.listdir('./checkpoints'):
+        os.rmdir('./checkpoints')
+
+    # Cleanup: Remove empty results/{setting} directory (created by test() but unused)
+    results_setting_dir = os.path.join('./results', setting)
+    if os.path.exists(results_setting_dir) and not os.listdir(results_setting_dir):
+        os.rmdir(results_setting_dir)
+
     return results
 
 
-def save_results(results_list, dataset, seq_len, multi_config):
-    """Save results to CSV file."""
+def save_results(results, dataset, seq_len, multi_config, append=False):
+    """
+    Save results to CSV file.
+
+    Args:
+        results: Single result dict or list of result dicts
+        dataset: Dataset name
+        seq_len: Sequence length
+        multi_config: Multi-experiment configuration
+        append: If True, append to existing CSV. If False, overwrite.
+    """
     results_dir = multi_config['results_root_template'].format(
         dataset_name=dataset,
         seq_len=seq_len
     )
     os.makedirs(results_dir, exist_ok=True)
 
-    df = pd.DataFrame(results_list)
     csv_path = os.path.join(results_dir, f'results_seqlen{seq_len}.csv')
 
-    df.to_csv(csv_path, index=False)
-    print(f'\nResults saved to: {csv_path}')
+    # Convert single result to list
+    if isinstance(results, dict):
+        results_list = [results]
+    else:
+        results_list = results
+
+    df_new = pd.DataFrame(results_list)
+
+    if append and os.path.exists(csv_path):
+        # Append to existing CSV
+        df_existing = pd.read_csv(csv_path)
+        df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+        df_combined.to_csv(csv_path, index=False)
+        print(f'\n✓ Results appended to: {csv_path}')
+    else:
+        # Create new CSV or overwrite
+        df_new.to_csv(csv_path, index=False)
+        print(f'\n✓ Results saved to: {csv_path}')
+
+    print(f'  Total experiments in file: {len(pd.read_csv(csv_path))}')
 
 
 def main():
@@ -293,7 +349,8 @@ def main():
 
     for dataset in datasets:
         for seq_len in seq_lens:
-            results_list = []
+            # Track if this is the first model for this dataset+seq_len combination
+            first_model = True
 
             for model in models:
                 count += 1
@@ -301,23 +358,34 @@ def main():
                 print("-" * 80)
 
                 try:
-                    print(f"\nStep 1: Hyperparameter Optimization")
-                    best_params, best_prauc = run_optimization(dataset, model, seq_len, multi_config)
+                    print(f"\nStep 1/2: Hyperparameter Optimization")
+                    print("-" * 40)
+                    best_params, best_monitor_score = run_optimization(dataset, model, seq_len, multi_config)
+                    print(f"\n✓ Optimization completed | Best monitor score: {best_monitor_score:.6f}")
+                    print(f"  Best parameters: {best_params}")
 
-                    print(f"\nStep 2: Final Training with Best Hyperparameters")
+                    print(f"\nStep 2/2: Final Training with Best Hyperparameters")
+                    print("-" * 40)
                     results = run_final_training(dataset, model, seq_len, best_params, multi_config)
-                    results_list.append(results)
 
-                    print(f"\nCompleted {dataset} + {model} + seq_len={seq_len}")
-                    print(f"Best PRAUC: {results['PRAUC']:.6f}")
-                    print(f"AUC: {results['AUC']:.6f}")
-                    print(f"LogLoss: {results['LogLoss']:.6f}")
+                    # Save immediately after each model completes
+                    # First model creates new CSV, subsequent models append
+                    save_results(results, dataset, seq_len, multi_config, append=not first_model)
+                    first_model = False
+
+                    print(f"\n{'='*80}")
+                    print(f"✓ Completed [{count}/{total}]: {dataset} + {model} + seq_len={seq_len}")
+                    print(f"  PRAUC: {results['PRAUC']:.6f} | AUC: {results['AUC']:.6f} | LogLoss: {results['LogLoss']:.6f}")
+                    print(f"  Train Time: {results['train_time_sec']:.1f}s | Inference Time: {results['inference_time_sec']:.2f}s")
+                    print(f"  Model Size: {results['model_size_mb']:.2f}MB | Params: {results['num_params']:,}")
+                    print(f"{'='*80}")
 
                 except Exception as e:
-                    print(f"\nError in {dataset} + {model} + seq_len={seq_len}: {str(e)}")
+                    import traceback
+                    print(f"\n✗ Error in {dataset} + {model} + seq_len={seq_len}: {str(e)}")
+                    print("Traceback:")
+                    traceback.print_exc()
                     continue
-
-            save_results(results_list, dataset, seq_len, multi_config)
 
     print("\n" + "=" * 80)
     print(f"All {total} experiments completed!")

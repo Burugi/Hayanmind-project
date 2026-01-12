@@ -1,16 +1,8 @@
 # SegRNN model hyperparameters
+# Note: d_model, dropout are defined in hyperopt_config.yaml
 
 model_params:
-  d_model:
-    type: categorical
-    choices: [64, 128, 256, 512]
-
-  dropout:
-    type: float
-    min: 0.0
-    max: 0.5
-
   seg_len:
     type: categorical
     # Only values that divide common seq_lens (64, 128, 256, 512, 1024)
-    choices: [8, 16, 32, 64]
+    choices: [4, 8, 16, 32]

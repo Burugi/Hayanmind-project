@@ -214,6 +214,13 @@ class Model(nn.Module):
 
         self.remap = torch.nn.Linear(self.d_model, self.seq_len)
 
+        # Classification layers
+        if self.task_name in ['classification', 'binary_classification']:
+            self.act = nn.GELU()
+            self.dropout_layer = nn.Dropout(self.dropout)
+            num_classes = getattr(configs, 'num_class', 1)
+            self.projection = nn.Linear(self.d_channel * self.d_model, num_classes)
+
     def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
         # Normalization
         means = x_enc.mean(1, keepdim=True).detach()
@@ -343,6 +350,65 @@ class Model(nn.Module):
         dec_out = dec_out + (means[:, 0].unsqueeze(1).repeat(1, self.pred_len, 1))
         return dec_out
 
+    def classification(self, x_enc, x_mark_enc):
+        # Normalization
+        means = x_enc.mean(1, keepdim=True).detach()
+        x_enc = x_enc - means
+        stdev = torch.sqrt(torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5)
+        x_enc /= stdev
+
+        # Multi-scale embedding
+        x_i = x_enc.permute(0, 2, 1)
+
+        x_i_p1 = x_i
+        x_i_p2 = self.padding_patch_layer2(x_i)
+        x_i_p3 = self.padding_patch_layer3(x_i)
+        x_i_p4 = self.padding_patch_layer4(x_i)
+        encoding_patch1 = self.embedding_patch_1(
+            rearrange(x_i_p1, "b c l -> (b c) l").unsqueeze(-1).permute(0, 2, 1)
+        ).permute(0, 2, 1)
+        encoding_patch2 = self.embedding_patch_2(
+            rearrange(x_i_p2, "b c l -> (b c) l").unsqueeze(-1).permute(0, 2, 1)
+        ).permute(0, 2, 1)
+        encoding_patch3 = self.embedding_patch_3(
+            rearrange(x_i_p3, "b c l -> (b c) l").unsqueeze(-1).permute(0, 2, 1)
+        ).permute(0, 2, 1)
+        encoding_patch4 = self.embedding_patch_4(
+            rearrange(x_i_p4, "b c l -> (b c) l").unsqueeze(-1).permute(0, 2, 1)
+        ).permute(0, 2, 1)
+
+        encoding_patch = (
+            torch.cat(
+                (encoding_patch1, encoding_patch2, encoding_patch3, encoding_patch4),
+                dim=-1,
+            )
+            + self.pe
+        )
+        # Temporal encoding
+        for i in range(self.N):
+            encoding_patch = self.encoder_list[i](encoding_patch)[0]
+
+        # Channel-wise encoding
+        x_patch_c = rearrange(
+            encoding_patch, "(b c) p d -> b c (p d)", b=x_enc.shape[0], c=self.d_channel
+        )
+        x_ch = self.embedding_channel(x_patch_c.permute(0, 2, 1)).transpose(
+            1, 2
+        )  # [b c d]
+
+        encoding_1_ch = self.encoder_list_ch[0](x_ch)[0]
+
+        # Apply padding mask if provided
+        if x_mark_enc is not None:
+            encoding_1_ch = encoding_1_ch * x_mark_enc.unsqueeze(-1)
+
+        # Flatten and project
+        output = encoding_1_ch.reshape(encoding_1_ch.shape[0], -1)  # [B, c * d]
+        output = self.act(output)
+        output = self.dropout_layer(output)
+        output = self.projection(output)  # [B, num_classes]
+        return output
+
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
         if (
             self.task_name == "long_term_forecast"
@@ -352,14 +418,13 @@ class Model(nn.Module):
             return dec_out[:, -self.pred_len :, :]  # [B, L, D]
         if self.task_name == "imputation":
             raise NotImplementedError(
-                "Task imputation for WPMixer is temporarily not supported"
+                "Task imputation for MultiPatchFormer is temporarily not supported"
             )
         if self.task_name == "anomaly_detection":
             raise NotImplementedError(
-                "Task anomaly_detection for WPMixer is temporarily not supported"
+                "Task anomaly_detection for MultiPatchFormer is temporarily not supported"
             )
-        if self.task_name == "classification":
-            raise NotImplementedError(
-                "Task classification for WPMixer is temporarily not supported"
-            )
+        if self.task_name in ['classification', 'binary_classification']:
+            dec_out = self.classification(x_enc, x_mark_enc)
+            return dec_out  # [B, num_classes]
         return None

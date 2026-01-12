@@ -37,7 +37,8 @@ class Decomposition(nn.Module):
         self.batch_size = batch_size
         self.channel = channel
         self.d_model = d_model
-        self.device = device
+        # Convert device to torch.device if it's a string
+        self.device = torch.device(device) if isinstance(device, str) else device
         self.no_decomposition = no_decomposition
         self.use_amp = use_amp
         self.eps = 1e-5

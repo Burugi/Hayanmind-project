@@ -15,9 +15,10 @@ import copy
 class HyperparameterOptimizer:
     """
     Hyperparameter optimizer using Optuna for binary classification.
+    Supports FuxiCTR-style monitor configuration with multiple metrics.
     """
     def __init__(self, args, model_name, common_config_path, model_config_path,
-                 save_dir, sampler_type='tpe'):
+                 save_dir, sampler_type='tpe', monitor=None):
         self.base_args = copy.deepcopy(args)
         self.model_name = model_name
         self.save_dir = save_dir
@@ -35,6 +36,10 @@ class HyperparameterOptimizer:
             raise ValueError(f"Unknown sampler type: {sampler_type}")
 
         self.device = torch.device(f'cuda:{args.gpu}' if args.use_gpu else 'cpu')
+
+        # Monitor configuration: {metric_name: direction}
+        # direction: 1 for maximize, -1 for minimize
+        self.monitor = monitor if monitor else {'PRAUC': 1}
 
     def _suggest_parameters(self, trial):
         """Suggest hyperparameters for a trial."""
@@ -91,6 +96,29 @@ class HyperparameterOptimizer:
 
         return params
 
+    def _compute_monitor_score(self, metrics):
+        """
+        Compute combined score from multiple metrics based on monitor configuration.
+        For Optuna, we minimize the score, so:
+        - For maximize metrics (direction=1): negate the value
+        - For minimize metrics (direction=-1): use as is
+
+        Args:
+            metrics: dict of metric values
+
+        Returns:
+            Combined score (lower is better for Optuna)
+        """
+        score = 0.0
+        for metric_name, direction in self.monitor.items():
+            if metric_name not in metrics:
+                raise ValueError(f"Metric {metric_name} not found in validation metrics")
+            metric_value = metrics[metric_name]
+            # direction=1 means maximize, so negate for Optuna minimization
+            # direction=-1 means minimize, so use as is
+            score += -direction * metric_value
+        return score
+
     def objective(self, trial):
         """Optuna objective function."""
         args = copy.deepcopy(self.base_args)
@@ -134,18 +162,22 @@ class HyperparameterOptimizer:
             avg_train_loss = np.mean(train_loss)
             vali_loss, vali_metrics = exp.vali(vali_data, vali_loader, criterion)
 
+            # Compute monitor score
+            monitor_score = self._compute_monitor_score(vali_metrics)
+
+            # Print metrics
+            metrics_str = " | ".join([f"Val {k}: {vali_metrics[k]:.4f}" for k in self.monitor.keys()])
             print(f"    Trial {trial.number} | Epoch {epoch+1}/{max_epochs} | "
-                  f"Train Loss: {avg_train_loss:.4f} | Val Loss: {vali_loss:.4f} | "
-                  f"Val PRAUC: {vali_metrics['PRAUC']:.4f}")
+                  f"Train Loss: {avg_train_loss:.4f} | Val Loss: {vali_loss:.4f} | {metrics_str}")
 
             temp_path = os.path.join(self.save_dir, f'temp_trial_{trial.number}')
             os.makedirs(temp_path, exist_ok=True)
-            early_stopping(-vali_metrics['PRAUC'], exp.model, temp_path)
+            early_stopping(monitor_score, exp.model, temp_path)
 
             if early_stopping.early_stop:
                 break
 
-            trial.report(-vali_metrics['PRAUC'], epoch)
+            trial.report(monitor_score, epoch)
 
             if trial.should_prune():
                 raise optuna.TrialPruned()
@@ -156,7 +188,7 @@ class HyperparameterOptimizer:
         if os.path.exists(temp_path) and not os.listdir(temp_path):
             os.rmdir(temp_path)
 
-        return -vali_metrics['PRAUC']
+        return monitor_score
 
     def optimize(self, n_trials=None, timeout=None):
         """
@@ -182,9 +214,10 @@ class HyperparameterOptimizer:
 
         results = {
             'best_params': study.best_params,
-            'best_value': -study.best_value,
+            'best_monitor_score': study.best_value,
             'best_trial': study.best_trial.number,
-            'n_trials': len(study.trials)
+            'n_trials': len(study.trials),
+            'monitor_config': self.monitor
         }
 
         result_path = os.path.join(self.save_dir, 'hyperopt_results.json')
@@ -193,7 +226,8 @@ class HyperparameterOptimizer:
 
         print(f'\nOptimization completed!')
         print(f'Best params: {results["best_params"]}')
-        print(f'Best PRAUC: {results["best_value"]:.6f}')
+        print(f'Best monitor score: {results["best_monitor_score"]:.6f} (lower is better)')
+        print(f'Monitor config: {self.monitor}')
         print(f'Results saved to: {result_path}')
 
-        return results['best_params'], results['best_value']
+        return results['best_params'], results['best_monitor_score']

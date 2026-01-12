@@ -239,7 +239,7 @@ if __name__ == '__main__':
                         help='Root directory containing datasets')
     parser.add_argument('--dataset', type=str, default='redkiwi',
                         help='Dataset name (e.g., redkiwi, alipay)')
-    parser.add_argument('--max_seq_len', type=int, nargs='+', default=[64, 128, 256, 512, 1024, 2048, 4096, 8192], # 
+    parser.add_argument('--max_seq_len', type=int, nargs='+', default=[36, 48, 60, 96, 192, 336, 720], 
                     help='Maximum user sequence length(s). e.g. --max_seq_len 200 500 1000')
 
     args = parser.parse_args()

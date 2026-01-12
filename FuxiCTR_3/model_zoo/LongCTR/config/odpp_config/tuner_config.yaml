@@ -1,5 +1,5 @@
-base_config: ./config/mirrn_config/
-base_expid: MIRRN_redkiwi
+base_config: ./config/odpp_config/
+base_expid: ODPP_redkiwi
 dataset_id: redkiwi
 
 redkiwi:
@@ -20,12 +20,15 @@ redkiwi:
 
 tuner_space:
     model_root: './checkpoints/'
-    embedding_dim: 16
-    dnn_hidden_units: [[256, 128, 64]]
-    net_dropout: [0.2, 0.1, 0]
-    batch_norm: False
-    learning_rate: 5.e-4
-    batch_size: 512
-    seed: 42
+    embedding_dim: [32, 64, 128]
+    seg_len: [20, 30, 50]
+    top_k: [10, 20, 30]
+    dist_hidden_dim: [64, 128]
+    pos_hidden_dim: [64, 128]
+    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    net_dropout: [0, 0.1, 0.2]
+    learning_rate: [1.e-3, 5.e-4]
+    batch_size: 256
+    seed: 2024
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {"PRAUC": 1, "AUC": 1}

@@ -5,6 +5,7 @@ __pycache__/
 
 # Experiments
 *.log
+*.json
 *.pth
 **/checkpoint/
 *.csv

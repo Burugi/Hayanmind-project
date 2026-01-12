@@ -1,0 +1,6 @@
+# MultiPatchFormer model hyperparameters
+# Note: d_model, d_ff, dropout, n_heads, e_layers are defined in hyperopt_config.yaml
+
+# MultiPatchFormer does not have additional model-specific hyperparameters
+# All hyperparameters are defined in hyperopt_config.yaml (common_params)
+model_params: {}

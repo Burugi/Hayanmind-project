@@ -4,23 +4,27 @@
 # Experiment combinations
 dataset_list:
   - redkiwi32
+  - redkiwi64
+  - redkiwi128
+  - alipay
+  - taobao
+  - tmall
+  - amazon
   # Add more datasets here
 
 model_list:
-  # - DLinear
-  # - SegRNN
-  # - Informer
-  - WPMixer
+  - DLinear
+  - SegRNN
+  - Informer
   - TimeMixer
-  # SCINet does not support classification tasks
-  # - SCINet
-
+  - WPMixer
+  # - MultiPatchFormer # 필요이상 모델인 것 같아 보류
+  
 seq_len_list:
-  # - 64
-  # - 128
-  - 256
-  # - 512
-  # - 1024
+  - 96
+  - 192
+  - 336
+  - 720
 
 # Path templates
 data_root_template: "../FuxiCTR_3/data/{dataset_name}/maxlen{seq_len}/"
@@ -65,6 +69,10 @@ model_configs:
     down_sampling_window: 1
     channel_independence: 1
 
+  MultiPatchFormer:
+    model: MultiPatchFormer
+    embed: timeF
+
   # SCINet config (currently not supporting classification)
   # SCINet:
   #   model: SCINet
@@ -77,8 +85,8 @@ model_configs:
 # Common training settings
 common_settings:
   batch_size: 256
-  train_epochs: 10
-  patience: 2
+  train_epochs: 50
+  patience: 10
   learning_rate: 0.001
   num_workers: 0
   use_gpu: true
@@ -86,8 +94,13 @@ common_settings:
 
 # Optimization settings
 optimization:
-  n_trials: 2  # Set to 2 for quick testing, increase for real experiments
+  n_trials: 5  # Set to 2 for quick testing, increase for real experiments
   timeout: null
   sampler: tpe
-  metric: PRAUC
-  direction: maximize
+  monitor:
+    PRAUC: 1  # 1 = maximize
+    LogLoss: -1  # -1 = minimize (uncomment to use multiple metrics)
+    # Note: metric names are case-sensitive. Use 'LogLoss' not 'logloss'
+  # Legacy single metric format (deprecated, use monitor instead):
+  # metric: PRAUC
+  # direction: maximize

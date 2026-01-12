@@ -1,5 +1,20 @@
 # WPMixer model hyperparameters
-# Note: d_model, d_ff, dropout are in common_config
-# WPMixer uses common hyperparameters only
+# Note: d_model, d_ff, dropout, n_heads, e_layers are defined in hyperopt_config.yaml
 
-model_params: {}
+model_params:
+  # WPMixer-specific parameters
+  tfactor:
+    type: categorical
+    choices: [3, 5, 7]
+
+  dfactor:
+    type: categorical
+    choices: [3, 5, 7]
+
+  wavelet:
+    type: categorical
+    choices: ['db2', 'db4', 'haar']
+
+  level:
+    type: categorical
+    choices: [1, 2, 3]

@@ -281,6 +281,12 @@ class Model(nn.Module):
         else:
             pred_len = args.pred_len
 
+        # Use hyperparameters from args if available, otherwise use defaults
+        tfactor = getattr(args, 'tfactor', tfactor)
+        dfactor = getattr(args, 'dfactor', dfactor)
+        wavelet = getattr(args, 'wavelet', wavelet)
+        level = getattr(args, 'level', level)
+
         self.wpmixerCore = WPMixerCore(input_length=self.args.seq_len,
                                        pred_length=pred_len,
                                        wavelet_name=wavelet,
@@ -329,6 +335,10 @@ class Model(nn.Module):
 
         # WPMixer core
         enc_out = self.wpmixerCore(x_enc)  # [B, seq_len, c_out]
+
+        # Apply padding mask if provided
+        if x_mark_enc is not None:
+            enc_out = enc_out * x_mark_enc.unsqueeze(-1)
 
         # Flatten and project
         output = enc_out.reshape(enc_out.shape[0], -1)  # [B, seq_len * c_out]
