@@ -57,10 +57,12 @@ class SegmenterModule(nn.Module):
 
 
 class DistributionalOrderedEncoder(nn.Module):
-    """Encodes segment distribution with position-aware attention."""
+    """Encodes segment distribution with position-aware and target-aware attention."""
 
-    def __init__(self, input_dim, hidden_dim, output_dim):
+    def __init__(self, input_dim, hidden_dim, output_dim, use_target_attention=True):
         super(DistributionalOrderedEncoder, self).__init__()
+        self.use_target_attention = use_target_attention
+
         self.position_mlp = MLP_Block(
             input_dim=1,
             hidden_units=[hidden_dim],
@@ -68,20 +70,29 @@ class DistributionalOrderedEncoder(nn.Module):
             output_dim=hidden_dim,
             batch_norm=False
         )
+
+        # Attention with optional target conditioning
+        attention_input_dim = input_dim + hidden_dim
+        if use_target_attention:
+            attention_input_dim += input_dim  # Add target dimension
+
         self.attention_mlp = MLP_Block(
-            input_dim=input_dim + hidden_dim,
+            input_dim=attention_input_dim,
             hidden_units=[hidden_dim],
             hidden_activations="ReLU",
             output_dim=1,
             batch_norm=False
         )
-        self.output_proj = nn.Linear(input_dim, output_dim)
 
-    def forward(self, segmented_emb, segmented_mask=None):
+        self.output_proj = nn.Linear(input_dim, output_dim)
+        self.layer_norm = nn.LayerNorm(output_dim)
+
+    def forward(self, segmented_emb, segmented_mask=None, target_emb=None):
         """
         Args:
             segmented_emb: (B, T, seg_len, D_embed)
             segmented_mask: (B, T, seg_len)
+            target_emb: (B, D_embed) - target item embedding for attention
         Returns:
             segment_repr: (B, T, D_dist)
         """
@@ -89,14 +100,19 @@ class DistributionalOrderedEncoder(nn.Module):
 
         # Compute relative positions (0 to 1)
         positions = torch.arange(seg_len, dtype=torch.float32, device=segmented_emb.device)
-        positions = positions / max(seg_len - 1, 1)  # Normalize to [0, 1]
+        positions = positions / max(seg_len - 1, 1)
         positions = positions.view(1, 1, seg_len, 1).expand(B, T, -1, -1)
 
         # Position encoding
         pos_encoding = self.position_mlp(positions)  # (B, T, seg_len, hidden_dim)
 
         # Combine event embedding with position encoding
-        combined = torch.cat([segmented_emb, pos_encoding], dim=-1)  # (B, T, seg_len, D + hidden_dim)
+        combined = torch.cat([segmented_emb, pos_encoding], dim=-1)
+
+        # Add target conditioning if enabled
+        if self.use_target_attention and target_emb is not None:
+            target_expanded = target_emb.unsqueeze(1).unsqueeze(2).expand(-1, T, seg_len, -1)
+            combined = torch.cat([combined, target_expanded], dim=-1)
 
         # Compute attention scores
         attention_scores = self.attention_mlp(combined).squeeze(-1)  # (B, T, seg_len)
@@ -109,31 +125,40 @@ class DistributionalOrderedEncoder(nn.Module):
         attention_weights = F.softmax(attention_scores, dim=-1)  # (B, T, seg_len)
 
         # Weighted sum
-        segment_repr = torch.einsum('bts,btsd->btd', attention_weights, segmented_emb)  # (B, T, D)
+        segment_repr = torch.einsum('bts,btsd->btd', attention_weights, segmented_emb)
 
-        # Project to output dimension
-        segment_repr = self.output_proj(segment_repr)  # (B, T, D_dist)
+        # Project to output dimension and normalize
+        segment_repr = self.output_proj(segment_repr)
+        segment_repr = self.layer_norm(segment_repr)
 
         return segment_repr
 
 
 class PositionAwareTopKPooling(nn.Module):
-    """Selects top-K important events with position awareness."""
+    """Selects top-K important events with position and target awareness."""
 
-    def __init__(self, input_dim, max_seq_len, top_k, hidden_dim, output_dim):
+    def __init__(self, input_dim, max_seq_len, top_k, hidden_dim, output_dim, use_target_attention=True):
         super(PositionAwareTopKPooling, self).__init__()
         self.top_k = top_k
         self.input_dim = input_dim
-        # Use a very large position embedding to handle any sequence length
+        self.use_target_attention = use_target_attention
+
         self.max_position_embeddings = 10000
         self.position_embedding = nn.Embedding(self.max_position_embeddings, input_dim)
+
+        # Importance scoring with optional target conditioning
+        importance_input_dim = input_dim * 2
+        if use_target_attention:
+            importance_input_dim += input_dim
+
         self.importance_mlp = MLP_Block(
-            input_dim=input_dim * 2,
+            input_dim=importance_input_dim,
             hidden_units=[hidden_dim],
             hidden_activations="ReLU",
             output_dim=1,
             batch_norm=False
         )
+
         self.encoding_mlp = MLP_Block(
             input_dim=input_dim * 2,
             hidden_units=[hidden_dim],
@@ -142,26 +167,36 @@ class PositionAwareTopKPooling(nn.Module):
             batch_norm=False
         )
 
-    def forward(self, sequence_emb, mask=None):
+        self.layer_norm = nn.LayerNorm(output_dim)
+
+    def forward(self, sequence_emb, mask=None, target_emb=None):
         """
         Args:
             sequence_emb: (B, L, D_embed)
             mask: (B, L)
+            target_emb: (B, D_embed) - target item embedding for importance scoring
         Returns:
             pooled_repr: (B, D_pos)
         """
         B, L, D = sequence_emb.shape
 
-        # Get position embeddings with clamping to handle any sequence length
+        # Get position embeddings
         positions = torch.arange(L, device=sequence_emb.device).unsqueeze(0).expand(B, -1)
         positions = torch.clamp(positions, max=self.max_position_embeddings - 1)
-        pos_emb = self.position_embedding(positions)  # (B, L, D)
+        pos_emb = self.position_embedding(positions)
 
         # Combine event and position embeddings
-        combined_emb = torch.cat([sequence_emb, pos_emb], dim=-1)  # (B, L, 2*D)
+        combined_emb = torch.cat([sequence_emb, pos_emb], dim=-1)
+
+        # Add target conditioning for importance scoring
+        if self.use_target_attention and target_emb is not None:
+            target_expanded = target_emb.unsqueeze(1).expand(-1, L, -1)
+            importance_input = torch.cat([combined_emb, target_expanded], dim=-1)
+        else:
+            importance_input = combined_emb
 
         # Compute importance scores
-        importance_scores = self.importance_mlp(combined_emb).squeeze(-1)  # (B, L)
+        importance_scores = self.importance_mlp(importance_input).squeeze(-1)
 
         # Apply mask if provided
         if mask is not None:
@@ -169,24 +204,30 @@ class PositionAwareTopKPooling(nn.Module):
 
         # Select top-K indices
         top_k = min(self.top_k, L)
-        _, topk_indices = torch.topk(importance_scores, k=top_k, dim=-1)  # (B, top_k)
+        topk_values, topk_indices = torch.topk(importance_scores, k=top_k, dim=-1)
 
         # Sort indices to preserve order
         topk_indices_sorted, _ = torch.sort(topk_indices, dim=-1)
 
         # Gather top-K embeddings
         batch_indices = torch.arange(B, device=sequence_emb.device).unsqueeze(1).expand(-1, top_k)
-        topk_combined_emb = combined_emb[batch_indices, topk_indices_sorted]  # (B, top_k, 2*D)
+        topk_combined_emb = combined_emb[batch_indices, topk_indices_sorted]
 
-        # Encode and pool
-        encoded = self.encoding_mlp(topk_combined_emb)  # (B, top_k, D_pos)
-        pooled_repr = encoded.mean(dim=1)  # (B, D_pos)
+        # Encode and pool with attention-weighted aggregation
+        encoded = self.encoding_mlp(topk_combined_emb)
+
+        # Use softmax attention for weighted pooling
+        topk_scores = topk_values.gather(1, torch.argsort(topk_indices, dim=-1))
+        attn_weights = F.softmax(topk_scores, dim=-1)
+        pooled_repr = torch.einsum('bk,bkd->bd', attn_weights, encoded)
+
+        pooled_repr = self.layer_norm(pooled_repr)
 
         return pooled_repr
 
 
 class FusionModule(nn.Module):
-    """Fuses distributional and position-aware representations."""
+    """Fuses distributional and position-aware representations with gating."""
 
     def __init__(self, dist_dim, pos_dim, output_dim, use_distribution_encoder=True, use_position_pooling=True):
         super(FusionModule, self).__init__()
@@ -202,6 +243,17 @@ class FusionModule(nn.Module):
 
         self.fusion_layer = nn.Linear(fusion_input_dim, output_dim)
 
+        # Gating mechanism for adaptive fusion
+        if use_distribution_encoder and use_position_pooling:
+            self.gate_layer = nn.Sequential(
+                nn.Linear(dist_dim + pos_dim, output_dim),
+                nn.Sigmoid()
+            )
+            self.dist_proj = nn.Linear(dist_dim, output_dim)
+            self.pos_proj = nn.Linear(pos_dim, output_dim)
+
+        self.layer_norm = nn.LayerNorm(output_dim)
+
     def forward(self, z_dist=None, z_pos=None):
         """
         Args:
@@ -213,17 +265,25 @@ class FusionModule(nn.Module):
         representations = []
 
         if self.use_distribution_encoder and z_dist is not None:
-            # If z_dist has sequence dimension, pool it
             if z_dist.dim() == 3:
-                z_dist = z_dist.mean(dim=1)  # (B, D_dist)
+                z_dist = z_dist.mean(dim=1)
             representations.append(z_dist)
 
         if self.use_position_pooling and z_pos is not None:
             representations.append(z_pos)
 
-        # Concatenate and fuse
-        fused = torch.cat(representations, dim=-1)
-        fused_repr = self.fusion_layer(fused)
+        # Gated fusion when both components are available
+        if len(representations) == 2 and self.use_distribution_encoder and self.use_position_pooling:
+            combined = torch.cat(representations, dim=-1)
+            gate = self.gate_layer(combined)
+            dist_transformed = self.dist_proj(representations[0])
+            pos_transformed = self.pos_proj(representations[1])
+            fused_repr = gate * dist_transformed + (1 - gate) * pos_transformed
+        else:
+            fused = torch.cat(representations, dim=-1)
+            fused_repr = self.fusion_layer(fused)
+
+        fused_repr = self.layer_norm(fused_repr)
 
         return fused_repr
 
@@ -245,6 +305,7 @@ class ODPP(BaseModel):
                  dnn_activations="ReLU",
                  use_distribution_encoder=True,
                  use_position_pooling=True,
+                 use_target_attention=True,
                  learning_rate=1e-3,
                  net_dropout=0,
                  batch_norm=False,
@@ -266,12 +327,17 @@ class ODPP(BaseModel):
         self.accumulation_steps = accumulation_steps
         self.use_distribution_encoder = use_distribution_encoder
         self.use_position_pooling = use_position_pooling
+        self.use_target_attention = use_target_attention
 
-        # Calculate item embedding dimension
+        # Calculate item embedding dimension and batch embedding dimension
         self.item_info_dim = 0
+        self.batch_emb_dim = 0
         for feat, spec in self.feature_map.features.items():
             if spec.get("source") == "item":
                 self.item_info_dim += spec.get("embedding_dim", embedding_dim)
+            elif spec.get("type") not in ["meta"]:
+                # Non-meta, non-item features go into batch_dict
+                self.batch_emb_dim += spec.get("embedding_dim", embedding_dim)
 
         # Embedding layer
         self.embedding_layer = FeatureEmbedding(feature_map, embedding_dim)
@@ -282,18 +348,18 @@ class ODPP(BaseModel):
             self.dist_encoder = DistributionalOrderedEncoder(
                 input_dim=self.item_info_dim,
                 hidden_dim=dist_hidden_dim,
-                output_dim=dist_output_dim
+                output_dim=dist_output_dim,
+                use_target_attention=use_target_attention
             )
 
         if use_position_pooling:
-            # PositionAwareTopKPooling internally uses max_position_embeddings=10000
-            # so max_seq_len parameter is not critical anymore
             self.pos_pooling = PositionAwareTopKPooling(
                 input_dim=self.item_info_dim,
                 max_seq_len=kwargs.get("max_len", 1000),
                 top_k=top_k,
                 hidden_dim=pos_hidden_dim,
-                output_dim=pos_output_dim
+                output_dim=pos_output_dim,
+                use_target_attention=use_target_attention
             )
 
         self.fusion = FusionModule(
@@ -304,8 +370,8 @@ class ODPP(BaseModel):
             use_position_pooling=use_position_pooling
         )
 
-        # Calculate DNN input dimension
-        dnn_input_dim = feature_map.sum_emb_out_dim() + fusion_output_dim
+        # Calculate DNN input dimension: batch_emb + fused_repr + target_emb
+        dnn_input_dim = self.batch_emb_dim + fusion_output_dim + self.item_info_dim
 
         # Backbone MLP
         self.dnn = MLP_Block(
@@ -331,14 +397,15 @@ class ODPP(BaseModel):
             batch_emb = self.embedding_layer(batch_dict, flatten_emb=True)
             emb_list.append(batch_emb)
 
-        # Item features (sequential)
+        # Item features (sequential) - includes target item at the end
         item_feat_emb = self.embedding_layer(item_dict, flatten_emb=True)
         batch_size = mask.shape[0]
         item_feat_emb = item_feat_emb.view(batch_size, -1, self.item_info_dim)
 
-        # Use full sequence (ODPP uses entire sequence, not removing target)
-        sequence_emb = item_feat_emb  # (B, L, D)
-        sequence_mask = mask  # (B, L)
+        # Separate target item and history sequence (like SDIM)
+        target_emb = item_feat_emb[:, -1, :]  # (B, D) - target item
+        sequence_emb = item_feat_emb[:, :-1, :]  # (B, L, D) - history sequence
+        sequence_mask = mask  # (B, L) - mask matches history sequence length
 
         # Process through ODPP modules
         z_dist = None
@@ -347,16 +414,19 @@ class ODPP(BaseModel):
         if self.use_distribution_encoder:
             # Segmentation
             segmented_emb, segmented_mask = self.segmenter(sequence_emb, sequence_mask)
-            # Distributional encoding
-            z_dist = self.dist_encoder(segmented_emb, segmented_mask)  # (B, T, D_dist)
+            # Distributional encoding with target attention
+            z_dist = self.dist_encoder(segmented_emb, segmented_mask, target_emb)
 
         if self.use_position_pooling:
-            # Position-aware top-K pooling
-            z_pos = self.pos_pooling(sequence_emb, sequence_mask)  # (B, D_pos)
+            # Position-aware top-K pooling with target attention
+            z_pos = self.pos_pooling(sequence_emb, sequence_mask, target_emb)
 
         # Fusion
-        fused_repr = self.fusion(z_dist, z_pos)  # (B, D_fused)
+        fused_repr = self.fusion(z_dist, z_pos)
         emb_list.append(fused_repr)
+
+        # Add target item embedding for direct feature interaction
+        emb_list.append(target_emb)
 
         # Concatenate all features
         feature_emb = torch.cat(emb_list, dim=-1)

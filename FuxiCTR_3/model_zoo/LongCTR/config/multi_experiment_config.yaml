@@ -27,7 +27,7 @@ model_list:
   - din
   - finalmlp
   - transact
-  # - odpp
+  - odpp
 
 max_user_seq_len_list: 
   - 96
@@ -474,17 +474,17 @@ tuner_spaces:
   odpp:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    dnn_hidden_units: [[256, 128, 64]] # , [512, 256, 128]
-    seg_len: 30
-    top_k: 20
-    dist_hidden_dim: 64
-    dist_output_dim: 128
-    pos_hidden_dim: 64
-    pos_output_dim: 128
-    fusion_output_dim: 256
+    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    seg_len: [10, 20, 30]
+    top_k: [5, 10, 20]
+    dist_hidden_dim: [32, 64]
+    dist_output_dim: [64, 128]
+    pos_hidden_dim: [32, 64]
+    pos_output_dim: [32, 64, 128]
+    fusion_output_dim: [64, 128, 256]
     dnn_activations: relu
-    use_distribution_encoder: True
-    use_position_pooling: True
+    use_distribution_encoder: [True, False]
+    use_position_pooling: [True, False]
     net_dropout: 0
     accumulation_steps: 1
     batch_norm: False
