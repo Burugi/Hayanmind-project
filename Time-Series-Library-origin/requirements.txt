@@ -1,4 +1,4 @@
-torch==2.5.1
+torch==2.5.1 # CUDA 다른 곳에서는 다시 설치해야함
 einops==0.8.1
 local-attention==1.11.2
 reformer-pytorch==1.4.4

@@ -85,10 +85,12 @@ if __name__ == '__main__':
             os.remove(model.checkpoint)
             logging.info(f"Removed checkpoint: {model.checkpoint}")
 
+    num_params = sum(p.numel() for p in model.parameters())
+
     result_filename = Path(args['config']).name.replace(".yaml", "") + '.csv'
     with open(result_filename, 'a+') as fw:
-        fw.write(' {},[command] python {},[exp_id] {},[dataset_id] {},[train] {},[val] {},[test] {},[scalability] inference_time={:.2f}s peak_memory={:.2f}MB\n' \
+        fw.write(' {},[command] python {},[exp_id] {},[dataset_id] {},[train] {},[val] {},[test] {},[scalability] inference_time={:.2f}s peak_memory={:.2f}MB num_params={}\n' \
             .format(datetime.now().strftime('%Y%m%d-%H%M%S'),
                     ' '.join(sys.argv), experiment_id, params['dataset_id'],
                     "N.A.", print_to_list(valid_result), print_to_list(test_result),
-                    test_scalability["inference_time"], test_scalability["peak_memory_mb"]))
+                    test_scalability["inference_time"], test_scalability["peak_memory_mb"], num_params))

@@ -7,8 +7,10 @@ __pycache__/
 *.log
 *.json
 *.pth
+*.model
 **/checkpoint/
 *.csv
+*.ipynb
 FuxiCTR_3/model_zoo/LongCTR/config/temp_config/
 
 # Dataset

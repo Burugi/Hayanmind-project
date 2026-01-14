@@ -97,7 +97,7 @@ def create_base_args(dataset_config, model_config, common_settings, seq_len, roo
         'use_gpu': common_settings.get('use_gpu', True),
         'gpu': common_settings.get('gpu', 0),
         'gpu_type': 'cuda',
-        'use_multi_gpu': False,
+        'use_multi_gpu': True,
         'devices': '0,1,2,3',
         'device_ids': [0],
         'device': f"cuda:{common_settings.get('gpu', 0)}" if common_settings.get('use_gpu', True) else 'cpu',
@@ -212,7 +212,7 @@ def run_optimization(dataset, model, seq_len, multi_config):
     return best_params, best_monitor_score
 
 
-def run_final_training(dataset, model, seq_len, best_params, multi_config):
+def run_final_training(dataset, model, seq_len, best_params, multi_config, repeat_idx):
     """Run final training with best hyperparameters and collect scalability metrics."""
     dataset_config = multi_config['datasets'][dataset]
     model_config = multi_config['model_configs'][model]
@@ -228,12 +228,10 @@ def run_final_training(dataset, model, seq_len, best_params, multi_config):
     for key, value in best_params.items():
         setattr(args, key, value)
 
-    setting = f'{model}_{dataset}_seqlen{seq_len}_final'
+    setting = f'{model}_{dataset}_seqlen{seq_len}_final_r{repeat_idx}'
     exp = Exp_Binary_Classification(args)
 
-    print(f'\n{"="*80}')
-    print(f'Final Training: {dataset} + {model} + seq_len={seq_len}')
-    print(f'{"="*80}')
+    print(f'  Repeat {repeat_idx}: Training {model}')
 
     start_train_time = time.time()
     exp.train(setting)
@@ -250,6 +248,7 @@ def run_final_training(dataset, model, seq_len, best_params, multi_config):
         'dataset': dataset,
         'model': model,
         'seq_len': seq_len,
+        'repeat': repeat_idx,
         'PRAUC': test_metrics['PRAUC'],
         'AUC': test_metrics['AUC'],
         'LogLoss': test_metrics['LogLoss'],
@@ -268,15 +267,12 @@ def run_final_training(dataset, model, seq_len, best_params, multi_config):
     if os.path.exists(checkpoint_file):
         os.remove(checkpoint_file)
 
-    # Remove empty checkpoint directory
     if os.path.exists(checkpoint_dir) and not os.listdir(checkpoint_dir):
         os.rmdir(checkpoint_dir)
 
-    # Remove empty checkpoints parent directory
     if os.path.exists('./checkpoints') and not os.listdir('./checkpoints'):
         os.rmdir('./checkpoints')
 
-    # Cleanup: Remove empty results/{setting} directory (created by test() but unused)
     results_setting_dir = os.path.join('./results', setting)
     if os.path.exists(results_setting_dir) and not os.listdir(results_setting_dir):
         os.rmdir(results_setting_dir)
@@ -330,9 +326,12 @@ def main():
     parser.add_argument('--config', type=str,
                        default='./configs/multi_experiment_config.yaml',
                        help='Path to multi-experiment configuration file')
+    parser.add_argument('--n_repeats', type=int, default=3,
+                       help='Number of repeated experiments with best hyperparameters')
     args = parser.parse_args()
 
     multi_config = load_multi_experiment_config(args.config)
+    n_repeats = args.n_repeats
 
     datasets = multi_config['dataset_list']
     models = multi_config['model_list']
@@ -345,47 +344,43 @@ def main():
     print(f"Datasets: {datasets}")
     print(f"Models: {models}")
     print(f"Sequence lengths: {seq_lens}")
+    print(f"Repeated experiments per best config: {n_repeats}")
     print("=" * 80)
 
     for dataset in datasets:
         for seq_len in seq_lens:
-            # Track if this is the first model for this dataset+seq_len combination
-            first_model = True
+            first_result = True
 
             for model in models:
                 count += 1
                 print(f"\n[{count}/{total}] Running: {dataset} + {model} + seq_len={seq_len}")
                 print("-" * 80)
 
-                try:
-                    print(f"\nStep 1/2: Hyperparameter Optimization")
-                    print("-" * 40)
-                    best_params, best_monitor_score = run_optimization(dataset, model, seq_len, multi_config)
-                    print(f"\n✓ Optimization completed | Best monitor score: {best_monitor_score:.6f}")
-                    print(f"  Best parameters: {best_params}")
+                print(f"\nStep 1/2: Hyperparameter Optimization")
+                print("-" * 40)
+                best_params, best_monitor_score = run_optimization(dataset, model, seq_len, multi_config)
+                print(f"\n✓ Optimization completed | Best monitor score: {best_monitor_score:.6f}")
+                print(f"  Best parameters: {best_params}")
 
-                    print(f"\nStep 2/2: Final Training with Best Hyperparameters")
-                    print("-" * 40)
-                    results = run_final_training(dataset, model, seq_len, best_params, multi_config)
+                print(f"\nStep 2/2: Repeated Training with Best Hyperparameters ({n_repeats} runs)")
+                print("-" * 40)
 
-                    # Save immediately after each model completes
-                    # First model creates new CSV, subsequent models append
-                    save_results(results, dataset, seq_len, multi_config, append=not first_model)
-                    first_model = False
+                all_results = []
+                for repeat_idx in range(1, n_repeats + 1):
+                    results = run_final_training(dataset, model, seq_len, best_params, multi_config, repeat_idx)
+                    all_results.append(results)
+                    save_results(results, dataset, seq_len, multi_config, append=not first_result)
+                    first_result = False
 
-                    print(f"\n{'='*80}")
-                    print(f"✓ Completed [{count}/{total}]: {dataset} + {model} + seq_len={seq_len}")
-                    print(f"  PRAUC: {results['PRAUC']:.6f} | AUC: {results['AUC']:.6f} | LogLoss: {results['LogLoss']:.6f}")
-                    print(f"  Train Time: {results['train_time_sec']:.1f}s | Inference Time: {results['inference_time_sec']:.2f}s")
-                    print(f"  Model Size: {results['model_size_mb']:.2f}MB | Params: {results['num_params']:,}")
-                    print(f"{'='*80}")
-
-                except Exception as e:
-                    import traceback
-                    print(f"\n✗ Error in {dataset} + {model} + seq_len={seq_len}: {str(e)}")
-                    print("Traceback:")
-                    traceback.print_exc()
-                    continue
+                # Print summary
+                df = pd.DataFrame(all_results)
+                print(f"\n{'='*80}")
+                print(f"✓ Completed [{count}/{total}]: {dataset} + {model} + seq_len={seq_len}")
+                print(f"  Summary (n={n_repeats}):")
+                print(f"    PRAUC: {df['PRAUC'].mean():.6f} ± {df['PRAUC'].std():.6f}")
+                print(f"    AUC: {df['AUC'].mean():.6f} ± {df['AUC'].std():.6f}")
+                print(f"    LogLoss: {df['LogLoss'].mean():.6f} ± {df['LogLoss'].std():.6f}")
+                print(f"{'='*80}")
 
     print("\n" + "=" * 80)
     print(f"All {total} experiments completed!")

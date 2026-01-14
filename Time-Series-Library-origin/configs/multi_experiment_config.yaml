@@ -37,6 +37,46 @@ datasets:
     task_name: binary_classification
     features: S
     target: label
+  redkiwi32:
+    data: longctr
+    task_name: binary_classification
+    features: S
+    target: label
+  redkiwi64:  
+    data: longctr
+    task_name: binary_classification
+    features: S
+    target: label
+  redkiwi128:
+    data: longctr
+    task_name: binary_classification
+    features: S
+    target: label
+  redkiwi256:
+    data: longctr
+    task_name: binary_classification
+    features: S
+    target: label
+  alipay:
+    data: longctr
+    task_name: binary_classification
+    features: S
+    target: label
+  taobao:
+    data: longctr
+    task_name: binary_classification
+    features: S
+    target: label
+  tmall:
+    data: longctr
+    task_name: binary_classification
+    features: S
+    target: label
+  amazon:
+    data: longctr
+    task_name: binary_classification
+    features: S
+    target: label
 
   # Add more dataset configurations here
 
