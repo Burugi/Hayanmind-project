@@ -16,7 +16,7 @@ common_params:
 
   batch_size:
     type: categorical
-    choices: [256]
+    choices: [512]
 
   dropout:
     type: float

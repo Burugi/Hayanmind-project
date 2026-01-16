@@ -27,7 +27,7 @@ model_list:
   - din
   - finalmlp
   - transact
-  - odpp
+  - odpp # Issue - RuntimeError: torch.cat(): expected a non-empty list of Tensors. ablation에서 생기는 오류로 보임.
 
 max_user_seq_len_list: 
   - 96
@@ -256,7 +256,7 @@ tuner_spaces:
   #   net_dropout: [0.1]
   #   batch_norm: False
   #   learning_rate: [1.e-3]
-  #   batch_size: 256
+  #   batch_size: 512
   #   epochs : 2
   #   seed: 2025
   #   metrics: [[PRAUC, AUC, logloss]]
@@ -276,7 +276,7 @@ tuner_spaces:
     model_structure: [parallel, stacked]
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -296,7 +296,7 @@ tuner_spaces:
     aux_hidden_units: [100, 50]
     batch_norm: True
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -314,7 +314,7 @@ tuner_spaces:
     din_use_softmax: False
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -334,7 +334,7 @@ tuner_spaces:
     mlp1_batch_norm: False
     mlp2_batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -354,7 +354,7 @@ tuner_spaces:
     concat_max_pool: True
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -376,7 +376,7 @@ tuner_spaces:
     reuse_hash: True
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -396,7 +396,7 @@ tuner_spaces:
     Kc_cross_features: 0
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -420,7 +420,7 @@ tuner_spaces:
     l2_norm: False
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -442,7 +442,7 @@ tuner_spaces:
     reuse_hash: True
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -464,7 +464,7 @@ tuner_spaces:
     beta: 1
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -483,13 +483,13 @@ tuner_spaces:
     pos_output_dim: [32, 64, 128]
     fusion_output_dim: [64, 128, 256]
     dnn_activations: relu
-    use_distribution_encoder: [True, False]
-    use_position_pooling: [True, False]
+    use_distribution_encoder: [True] # , False
+    use_position_pooling: [True] # , False
     net_dropout: 0
     accumulation_steps: 1
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 256
+    batch_size: 512
     epochs: 50
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
@@ -498,3 +498,10 @@ tuner_spaces:
 
 # GPU settings
 gpu_list: [0] # , 1, 2, 3, 4, 5, 6, 7
+
+# Optuna optimization settings
+optimization:
+  n_trials: 20
+  timeout: null
+  sampler: tpe
+  monitor: {'PRAUC': 1, 'logloss': -1}

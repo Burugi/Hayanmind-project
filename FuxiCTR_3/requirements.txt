@@ -8,3 +8,4 @@ tqdm
 pyarrow
 polars<=1.0.0
 torch
+optuna # hyperparameter optimization library
