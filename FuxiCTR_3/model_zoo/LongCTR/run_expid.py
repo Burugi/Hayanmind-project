@@ -80,10 +80,21 @@ if __name__ == '__main__':
         test_gen = RankDataLoader(feature_map, stage='test', **params).make_iterator()
         test_result, test_scalability = model.evaluate(test_gen)
 
-        # Checkpoint cleanup: Remove checkpoint after test evaluation
+        # Checkpoint cleanup: Remove only this experiment's checkpoint file
         if os.path.exists(model.checkpoint):
-            os.remove(model.checkpoint)
-            logging.info(f"Removed checkpoint: {model.checkpoint}")
+            if os.path.isfile(model.checkpoint):
+                os.remove(model.checkpoint)
+                logging.info(f"Removed checkpoint file: {model.checkpoint}")
+            elif os.path.isdir(model.checkpoint):
+                # model.checkpoint가 디렉토리인 경우, 해당 실험의 모델 파일만 삭제
+                model_file = os.path.join(model.checkpoint, f"{params['model']}.model")
+                if os.path.exists(model_file):
+                    os.remove(model_file)
+                    logging.info(f"Removed checkpoint file: {model_file}")
+                # 디렉토리가 비었으면 디렉토리도 정리
+                if os.path.isdir(model.checkpoint) and not os.listdir(model.checkpoint):
+                    os.rmdir(model.checkpoint)
+                    logging.info(f"Removed empty checkpoint dir: {model.checkpoint}")
 
     num_params = sum(p.numel() for p in model.parameters())
 

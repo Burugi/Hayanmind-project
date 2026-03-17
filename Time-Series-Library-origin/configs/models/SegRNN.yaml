@@ -5,4 +5,4 @@ model_params:
   seg_len:
     type: categorical
     # Only values that divide common seq_lens (64, 128, 256, 512, 1024)
-    choices: [4, 8, 16, 32]
+    choices: [4, 8, 16]

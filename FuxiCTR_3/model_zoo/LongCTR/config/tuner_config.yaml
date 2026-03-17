@@ -25,7 +25,7 @@ tuner_space:
     net_dropout: [0.2, 0.1, 0]
     batch_norm: False
     learning_rate: 5.e-4
-    batch_size: 512
+    batch_size: 256
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
-    monitor: {"PRAUC": 1, "AUC": 1}
+    monitor: {"PRAUC": 1, "logloss": -1}

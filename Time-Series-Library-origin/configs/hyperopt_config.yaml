@@ -1,10 +1,10 @@
 # Common hyperparameter configuration for Optuna optimization
 
 # Optimization settings
-n_trials: 10
+n_trials: 5
 timeout: null  # null means no timeout
 patience: 10
-max_epochs: 50
+max_epochs: 20
 
 # Common hyperparameters shared across models
 common_params:
@@ -16,7 +16,7 @@ common_params:
 
   batch_size:
     type: categorical
-    choices: [512]
+    choices: [128]
 
   dropout:
     type: float
@@ -25,16 +25,16 @@ common_params:
 
   d_model:
     type: categorical
-    choices: [64, 128, 256, 512]
+    choices: [64, 128, 256]
 
   d_ff:
     type: categorical
-    choices: [128, 256, 512, 1024, 2048]
+    choices: [128, 256, 512]
 
   n_heads:
     type: categorical
-    choices: [2, 4, 8]
+    choices: [2, 4]
 
   e_layers:
     type: categorical
-    choices: [1, 2, 3]
+    choices: [1, 2]

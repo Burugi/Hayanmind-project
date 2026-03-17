@@ -282,6 +282,7 @@ def prepare_base_params(dataset, model_name, max_seq_len, multi_config, gpu_id):
     params['feature_cols'] = dataset_config['feature_cols']
     params['label_col'] = dataset_config['label_col']
     params['gpu'] = gpu_id
+    params['num_workers'] = 0
 
     return params, tuner_space, dataset_id, data_root
 
@@ -408,7 +409,7 @@ def main():
     parser.add_argument('--config', type=str,
                        default='./config/multi_experiment_config.yaml',
                        help='Path to multi-experiment configuration file')
-    parser.add_argument('--n_repeats', type=int, default=3,
+    parser.add_argument('--n_repeats', type=int, default=5,
                        help='Number of repeated experiments with best hyperparameters')
     args = vars(parser.parse_args())
 

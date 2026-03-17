@@ -5,14 +5,14 @@
 dataset_list:
 
 # Redkiwi dataset
-  - redkiwi32
-  - redkiwi64
-  - redkiwi128
-  - alipay
-  - tmall
-  - taobao # CUDA error가 나는 데 확인이 필요함 -> 지금은 됨 (2026.01.03)
-  - amazon
-  # - taobaodmr # -> shape 오류남 (2026.01.03)
+  # - redkiwi32
+  # - redkiwi64
+  # - redkiwi128
+  # - alipay
+  # - tmall
+  # - taobao # CUDA error가 나는 데 확인이 필요함 -> 지금은 됨 (2026.01.03)
+  # - amazon
+  - taobaodmr # -> shape 오류남 (2026.01.03), memory 오류 남(2026.03.13)
 
 
 
@@ -27,13 +27,15 @@ model_list:
   - din
   - finalmlp
   - transact
-  - odpp # Issue - RuntimeError: torch.cat(): expected a non-empty list of Tensors. ablation에서 생기는 오류로 보임.
+  # - journeymap
+  # - odpp # Issue - RuntimeError: torch.cat(): expected a non-empty list of Tensors. ablation에서 생기는 오류로 보임.
 
 max_user_seq_len_list: 
+  # - 36
   - 96
   - 192
   - 336
-  - 720
+  # - 720
 
 # Path templates
 data_root_template: "../../data/{dataset_name}/maxlen{max_user_seq_len}/"
@@ -74,6 +76,9 @@ model_base_configs:
   odpp:
     base_config: "./config/odpp_config/"
     base_expid: "ODPP_default"
+  journeymap:
+    base_config: "./config/journeymap_config/"
+    base_expid: "JourneyMap_default"
 
 # Dataset-specific feature columns (shared across all max_seq_len)
 datasets:
@@ -256,7 +261,7 @@ tuner_spaces:
   #   net_dropout: [0.1]
   #   batch_norm: False
   #   learning_rate: [1.e-3]
-  #   batch_size: 512
+  #   batch_size: 256
   #   epochs : 2
   #   seed: 2025
   #   metrics: [[PRAUC, AUC, logloss]]
@@ -269,15 +274,15 @@ tuner_spaces:
   dcnv2:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    stacked_dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
-    parallel_dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    stacked_dnn_hidden_units: [[256, 128, 64], [128, 64, 32]]
+    parallel_dnn_hidden_units: [[256, 128, 64], [128, 64, 32]]
     num_cross_layers: [2, 3, 4]
     net_dropout: [0, 0.1, 0.2]
     model_structure: [parallel, stacked]
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
@@ -286,7 +291,7 @@ tuner_spaces:
   dien:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    dnn_hidden_units: [[256, 128, 64], [128, 64, 32]]
     net_dropout: [0, 0.1, 0.2]
     attention_dropout: [0, 0.1, 0.2]
     gru_type: [AUGRU, GRU]
@@ -296,8 +301,8 @@ tuner_spaces:
     aux_hidden_units: [100, 50]
     batch_norm: True
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
@@ -306,7 +311,7 @@ tuner_spaces:
   din:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    dnn_hidden_units: [[256, 128, 64], [128, 64, 32]]
     net_dropout: [0, 0.1, 0.2]
     attention_dropout: [0, 0.1, 0.2]
     attention_hidden_units: [[64], [128]]
@@ -314,8 +319,8 @@ tuner_spaces:
     din_use_softmax: False
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
@@ -324,18 +329,18 @@ tuner_spaces:
   finalmlp:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    mlp1_hidden_units: [[256, 128], [512, 256]]
-    mlp2_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    mlp1_hidden_units: [[256, 128], [128, 64]]
+    mlp2_hidden_units: [[256, 128, 64], [128, 64, 32]]
     mlp1_dropout: [0, 0.1, 0.2]
     mlp2_dropout: [0, 0.1, 0.2]
     num_heads: [2, 4]
     use_fs: True
-    fs_hidden_units: [[256, 128], [512, 256]]
+    fs_hidden_units: [[256, 128], [128, 64]]
     mlp1_batch_norm: False
     mlp2_batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
@@ -344,7 +349,7 @@ tuner_spaces:
   transact:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    dcn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    dcn_hidden_units: [[256, 128, 64], [128, 64, 32]]
     num_heads: [2, 4]
     transformer_layers: [1, 2]
     transformer_dropout: [0, 0.1, 0.2]
@@ -354,8 +359,8 @@ tuner_spaces:
     concat_max_pool: True
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
@@ -364,7 +369,7 @@ tuner_spaces:
   mirrn:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    dnn_hidden_units: [[256, 128, 64], [128, 64, 32]]
     attention_dim: [32, 64, 128]
     num_heads: [2, 4]
     net_dropout: [0, 0.1, 0.2]
@@ -376,8 +381,8 @@ tuner_spaces:
     reuse_hash: True
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
@@ -386,7 +391,7 @@ tuner_spaces:
   twin:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    dnn_hidden_units: [[256, 128, 64], [128, 64, 32]]
     attention_dim: [32, 64, 128]
     num_heads: [2, 4]
     net_dropout: [0, 0.1, 0.2]
@@ -396,8 +401,8 @@ tuner_spaces:
     Kc_cross_features: 0
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
@@ -406,7 +411,7 @@ tuner_spaces:
   sdim:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    dnn_hidden_units: [[256, 128, 64], [128, 64, 32]]
     attention_dim: [32, 64, 128]
     num_heads: [2, 4]
     net_dropout: [0, 0.1, 0.2]
@@ -420,8 +425,8 @@ tuner_spaces:
     l2_norm: False
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
@@ -430,7 +435,7 @@ tuner_spaces:
   eta:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    dnn_hidden_units: [[256, 128, 64], [128, 64, 32]]
     attention_dim: [32, 64, 128]
     num_heads: [2, 4]
     net_dropout: [0, 0.1, 0.2]
@@ -442,8 +447,8 @@ tuner_spaces:
     reuse_hash: True
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
@@ -452,20 +457,20 @@ tuner_spaces:
   sim:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    dnn_hidden_units: [[256, 128, 64], [128, 64, 32]]
     attention_dim: [32, 64, 128]
     num_heads: [2, 4]
     net_dropout: [0, 0.1, 0.2]
     attention_dropout: [0, 0.1, 0.2]
     topk: [20, 50, 100]
     short_seq_len: [10, 20]
-    gsu_type: ["soft", "hard"]
+    gsu_type: ["soft"] # "hard"오류 발생 26/03/01 
     alpha: 1
     beta: 1
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
@@ -474,7 +479,7 @@ tuner_spaces:
   odpp:
     model_root: './checkpoints/'
     embedding_dim: [16, 32]
-    dnn_hidden_units: [[256, 128, 64], [512, 256, 128]]
+    dnn_hidden_units: [[256, 128, 64], [128, 64, 32]]
     seg_len: [10, 20, 30]
     top_k: [5, 10, 20]
     dist_hidden_dim: [32, 64]
@@ -489,19 +494,35 @@ tuner_spaces:
     accumulation_steps: 1
     batch_norm: False
     learning_rate: [1.e-3, 5.e-4]
-    batch_size: 512
-    epochs: 50
+    batch_size: 256
+    epochs: 30
     seed: 42
     metrics: [[PRAUC, AUC, logloss]]
     monitor: {'PRAUC': 1, 'logloss': -1}
     use_pos_weight: True  
 
+  journeymap:
+    model_root: './checkpoints/'
+    embedding_dim: [16, 32]
+    window_sizes: [[3, 5, 7, 9], [10, 15, 20, 25], [10, 20, 30, 40]]
+    num_prototypes: [32, 64, 128, 256]
+    gru_hidden_size: [32, 64, 128]
+    gru_num_layers: [1, 2, 3]
+    temperature: [0.2, 1.0]
+    learning_rate: [1.e-3, 5.e-4]
+    net_dropout: [0, 0.1]
+    batch_size: 256
+    epochs: 30
+    seed: 42
+    metrics: [[PRAUC, AUC, logloss]]
+    monitor: {'PRAUC': 1, 'logloss': -1}
+
 # GPU settings
-gpu_list: [0] # , 1, 2, 3, 4, 5, 6, 7
+gpu_list: [0] # 1, 2, 3, 4, 5, 6, 7
 
 # Optuna optimization settings
 optimization:
-  n_trials: 20
+  n_trials: 10
   timeout: null
   sampler: tpe
   monitor: {'PRAUC': 1, 'logloss': -1}

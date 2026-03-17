@@ -97,7 +97,7 @@ def create_base_args(dataset_config, model_config, common_settings, seq_len, roo
         'use_gpu': common_settings.get('use_gpu', True),
         'gpu': common_settings.get('gpu', 0),
         'gpu_type': 'cuda',
-        'use_multi_gpu': True,
+        'use_multi_gpu': False,
         'devices': '0,1,2,3',
         'device_ids': [0],
         'device': f"cuda:{common_settings.get('gpu', 0)}" if common_settings.get('use_gpu', True) else 'cpu',

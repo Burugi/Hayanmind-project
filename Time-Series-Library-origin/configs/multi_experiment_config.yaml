@@ -3,13 +3,14 @@
 
 # Experiment combinations
 dataset_list:
-  - redkiwi32
-  - redkiwi64
-  - redkiwi128
+  # - redkiwi32
+  # - redkiwi64
+  # - redkiwi128
   - alipay
   - taobao
   - tmall
   - amazon
+  # - taobaodmr
   # Add more datasets here
 
 model_list:
@@ -21,10 +22,11 @@ model_list:
   # - MultiPatchFormer # 필요이상 모델인 것 같아 보류
   
 seq_len_list:
+  # - 36
   - 96
   - 192
   - 336
-  - 720
+  # - 720
 
 # Path templates
 data_root_template: "../FuxiCTR_3/data/{dataset_name}/maxlen{seq_len}/"
@@ -77,6 +79,11 @@ datasets:
     task_name: binary_classification
     features: S
     target: label
+  taobaodmr:
+    data: longctr
+    task_name: binary_classification
+    features: S
+    target: label
 
   # Add more dataset configurations here
 
@@ -124,11 +131,11 @@ model_configs:
 
 # Common training settings
 common_settings:
-  batch_size: 256
-  train_epochs: 50
+  batch_size: 64
+  train_epochs: 30
   patience: 10
   learning_rate: 0.001
-  num_workers: 0
+  num_workers: 0 # 0은 너무 느림. 16에서는 에러 발생. 4로 설정.
   use_gpu: true
   gpu: 0
 
