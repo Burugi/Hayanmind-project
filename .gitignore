@@ -1,3 +1,8 @@
+# Dataset
+data/raw_data/
+data/AmazonElectronics_x1/
+notebook/artifacts/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,0 +1,58 @@
+Base:
+    num_workers: 3
+    verbose: 1
+    early_stop_patience: 2
+    pickle_feature_encoder: True
+    save_best_only: True
+    eval_steps: null
+    debug_mode: False
+    group_id: null
+    use_features: null
+    feature_config: null
+    # DIN(target-attention) 계열은 embedding layer에서 raw [B, L, D] 시퀀스를
+    # 그대로 받아 자체 attention으로 pooling 해야 한다. FuxiCTR는 sequence
+    # 피처에 기본 `MaskedAveragePooling` encoder를 자동 할당하므로, 아래처럼
+    # `feature_specs`로 해당 시퀀스의 encoder를 null로 덮어써야 한다.
+    # (FuxiCTR features.py:54, demo/example6_config 참조)
+    # 데이터셋을 바꾸면 여기 이름들을 해당 데이터셋의 sequence 필드로 교체.
+    #   KuaiVideo:   [{name: pos_items, feature_encoder: null}]
+    #   MicroVideo:  [{name: clicked_items, feature_encoder: null},
+    #                 {name: clicked_categories, feature_encoder: null}]
+    feature_specs:
+        - {name: item_history, feature_encoder: null}
+        - {name: cate_history, feature_encoder: null}
+
+DIN:
+    model: DIN
+    task: binary_classification
+    loss: binary_crossentropy
+    metrics: ['AUC', 'logloss']
+    optimizer: adam
+    learning_rate: 1.0e-3
+    embedding_regularizer: 0
+    net_regularizer: 0
+    batch_size: 4096
+    embedding_dim: 40
+    dnn_hidden_units: [512, 256, 128]
+    dnn_activations: relu
+    attention_hidden_units: [64]
+    attention_hidden_activations: Dice
+    attention_output_activation: null
+    attention_dropout: 0
+    # DIN은 target/sequence 필드 그룹을 **tuple**로 받아야 concat+attention-pool 한다.
+    # (DIN.py:105, `type(field) == tuple` 체크). YAML 표준 태그 `!!python/tuple` 을
+    # 써서 명시적으로 tuple을 만든다. 모델 쪽에 특수 처리를 만들지 않음.
+    # cate가 없는 데이터셋이면 tuple 안에 item_id 하나만 넣으면 된다.
+    din_target_field:
+        - !!python/tuple [item_id, cate_id]
+    din_sequence_field:
+        - !!python/tuple [item_history, cate_history]
+    din_use_softmax: False
+    net_dropout: 0
+    batch_norm: False
+    epochs: 20
+    shuffle: True
+    seed: 2026
+    monitor: AUC
+    monitor_mode: max
+    gpu: 0

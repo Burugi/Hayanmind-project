@@ -1,0 +1,6 @@
+AmazonElectronics_x1:
+    data_root: ../data/
+    data_format: parquet
+    train_data: ../data/AmazonElectronics_x1/train.parquet
+    valid_data: ../data/AmazonElectronics_x1/valid.parquet
+    test_data: ../data/AmazonElectronics_x1/test.parquet
