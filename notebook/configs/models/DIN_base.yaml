@@ -56,3 +56,45 @@ DIN:
     monitor: AUC
     monitor_mode: max
     gpu: 0
+
+# ---------------------------------------------------------------------------
+# Dataset-specific overrides: merged by load_base_config(MODEL, dataset_id)
+# when dataset_id matches. Put feature_specs in Base@..., target/sequence
+# field names in DIN@... . Paired datasets (Amazon, Micro) use tuple-grouped
+# fields so DIN concats their embeddings; single-seq datasets use strings.
+# ---------------------------------------------------------------------------
+
+Base@TaobaoAd_x1:
+    feature_specs:
+        - {name: click_sequence, feature_encoder: null}
+DIN@TaobaoAd_x1:
+    din_target_field: adgroup_id
+    din_sequence_field: click_sequence
+
+Base@KuaiVideo_x1:
+    feature_specs:
+        - {name: pos_items, feature_encoder: null}
+DIN@KuaiVideo_x1:
+    din_target_field: item_id
+    din_sequence_field: pos_items
+
+Base@MicroVideo1.7M_x1:
+    feature_specs:
+        - {name: clicked_items, feature_encoder: null}
+        - {name: clicked_categories, feature_encoder: null}
+DIN@MicroVideo1.7M_x1:
+    din_target_field:
+        - !!python/tuple [item_id, cate_id]
+    din_sequence_field:
+        - !!python/tuple [clicked_items, clicked_categories]
+
+# TAAC2026은 (item_id, item_int_feats_11) 페어로 DIN attention을 돌린다.
+# cate 대응 필드가 없으므로 단일 필드 (tuple X). 둘은 서로 다른 vocab/embedding
+# 공간이므로 attention을 제대로 쓰려면 FEATURE_TEMPLATES의 item_int_feats_11에
+# `share_embedding: 'item_id'`를 추가하고 데이터를 재빌드해야 한다.
+Base@TAAC2026:
+    feature_specs:
+        - {name: item_int_feats_11, feature_encoder: null}
+DIN@TAAC2026:
+    din_target_field: item_id
+    din_sequence_field: item_int_feats_11

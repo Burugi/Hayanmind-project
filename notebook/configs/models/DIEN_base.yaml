@@ -1,0 +1,81 @@
+Base:
+    num_workers: 3
+    verbose: 1
+    early_stop_patience: 2
+    pickle_feature_encoder: True
+    save_best_only: True
+    eval_steps: null
+    debug_mode: False
+    group_id: null
+    use_features: null
+    feature_config: null
+    # DIEN의 Attention+GRU는 raw [B, L, D] 시퀀스가 필요하므로 pre-pooling encoder 제거.
+    feature_specs:
+        - {name: item_history, feature_encoder: null}
+        - {name: cate_history, feature_encoder: null}
+
+DIEN:
+    model: DIEN
+    task: binary_classification
+    loss: binary_crossentropy
+    metrics: ['AUC', 'logloss']
+    optimizer: adam
+    learning_rate: 1.0e-3
+    embedding_regularizer: 0
+    net_regularizer: 0
+    batch_size: 4096
+    embedding_dim: 40
+    dnn_hidden_units: [1024, 512, 256]
+    dnn_activations: Dice
+    net_dropout: 0
+    # (item_id, cate_id) 그룹 + (item_history, cate_history) 그룹. 다른 데이터셋은 교체.
+    dien_target_field:
+        - !!python/tuple [item_id, cate_id]
+    dien_sequence_field:
+        - !!python/tuple [item_history, cate_history]
+    dien_neg_seq_field: []  # 음성 시퀀스 없는 경우 aux_loss_alpha=0로 학습
+    gru_type: AUGRU
+    enable_sum_pooling: False
+    attention_type: bilinear_attention
+    attention_hidden_units: [80, 40]
+    attention_activation: ReLU
+    attention_dropout: 0
+    use_attention_softmax: True
+    aux_hidden_units: [100, 50]
+    aux_activation: ReLU
+    aux_loss_alpha: 0
+    batch_norm: True
+    epochs: 20
+    shuffle: True
+    seed: 2026
+    monitor: AUC
+    monitor_mode: max
+    gpu: 0
+
+# ---------------------------------------------------------------------------
+# Dataset-specific overrides (see DIN_base.yaml 주석 참조).
+# ---------------------------------------------------------------------------
+
+Base@TaobaoAd_x1:
+    feature_specs:
+        - {name: click_sequence, feature_encoder: null}
+DIEN@TaobaoAd_x1:
+    dien_target_field: adgroup_id
+    dien_sequence_field: click_sequence
+
+Base@KuaiVideo_x1:
+    feature_specs:
+        - {name: pos_items, feature_encoder: null}
+DIEN@KuaiVideo_x1:
+    dien_target_field: item_id
+    dien_sequence_field: pos_items
+
+Base@MicroVideo1.7M_x1:
+    feature_specs:
+        - {name: clicked_items, feature_encoder: null}
+        - {name: clicked_categories, feature_encoder: null}
+DIEN@MicroVideo1.7M_x1:
+    dien_target_field:
+        - !!python/tuple [item_id, cate_id]
+    dien_sequence_field:
+        - !!python/tuple [clicked_items, clicked_categories]

@@ -503,17 +503,31 @@ def _default_fuxictr_params() -> dict:
     }
 
 
-def load_base_config(model_name: str) -> dict:
-    """Load ``notebook/configs/models/{model}_base.yaml`` and merge with defaults."""
+def load_base_config(model_name: str, dataset_id: str | None = None) -> dict:
+    """Load ``notebook/configs/models/{model}_base.yaml`` and merge with defaults.
+
+    Dataset-specific overrides are supported via sections keyed with
+    ``Base@{dataset_id}`` and ``{model_name}@{dataset_id}`` in the same YAML.
+    When ``dataset_id`` is passed, those sections are merged last so that
+    sequence/target field names (e.g. ``bst_sequence_field``, ``feature_specs``)
+    can differ per dataset without needing a separate file per combination.
+
+    Merge order (later overrides earlier):
+        defaults → Base → Base@{dataset_id} → {model_name} → {model_name}@{dataset_id}
+    """
     path = CONFIG_ROOT / "models" / f"{model_name}_base.yaml"
     if not path.exists():
         raise FileNotFoundError(f"Model base config missing: {path}")
     data = _load_yaml(path) or {}
     base = data.get("Base", {})
     model_cfg = data.get(model_name, {})
+    ds_base = data.get(f"Base@{dataset_id}", {}) if dataset_id else {}
+    ds_model = data.get(f"{model_name}@{dataset_id}", {}) if dataset_id else {}
     merged = _default_fuxictr_params()
     merged.update(base)
+    merged.update(ds_base)
     merged.update(model_cfg)
+    merged.update(ds_model)
     merged["model"] = model_name
     return merged
 

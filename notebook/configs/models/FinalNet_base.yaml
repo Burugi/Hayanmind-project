@@ -1,0 +1,40 @@
+Base:
+    num_workers: 3
+    verbose: 1
+    early_stop_patience: 2
+    pickle_feature_encoder: True
+    save_best_only: True
+    eval_steps: null
+    debug_mode: False
+    group_id: null
+    ordered_features: null
+    # FinalNet은 2-block feature gating 구조로 시퀀스 전용 처리 없음.
+    feature_specs: null
+
+FinalNet:
+    model: FinalNet
+    task: binary_classification
+    loss: binary_crossentropy
+    metrics: ['AUC', 'logloss']
+    optimizer: adam
+    learning_rate: 1.0e-3
+    embedding_regularizer: 0
+    net_regularizer: 0
+    batch_size: 4096
+    embedding_dim: 40
+    block_type: "2B"
+    batch_norm: True
+    use_feature_gating: True
+    block1_hidden_units: [64, 64, 64]
+    block1_hidden_activations: null
+    block1_dropout: 0
+    block2_hidden_units: [64, 64, 64]
+    block2_hidden_activations: null
+    block2_dropout: 0
+    residual_type: concat
+    epochs: 20
+    shuffle: True
+    seed: 2026
+    monitor: AUC
+    monitor_mode: max
+    gpu: 0

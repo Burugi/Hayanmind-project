@@ -1,0 +1,43 @@
+KuaiVideo_x1:
+  data_root: ../data/
+  data_format: csv
+  train_data: ../data/raw_data/KuaiVideo_x1_split/train.csv
+  valid_data: ../data/raw_data/KuaiVideo_x1_split/valid.csv
+  test_data: ../data/raw_data/KuaiVideo_x1/test.csv
+  min_categr_count: 1
+  feature_cols:
+  - name: user_id
+    active: true
+    dtype: str
+    type: categorical
+    pretrained_emb: ../data/raw_data/KuaiVideo_x1/user_visual_emb_dim64.h5
+    embedding_dim: 64
+    freeze_emb: true
+  - name: item_id
+    active: true
+    dtype: str
+    type: categorical
+    pretrained_emb: ../data/raw_data/KuaiVideo_x1/item_visual_emb_dim64.h5
+    embedding_dim: 64
+    freeze_emb: true
+  - name: pos_items
+    active: true
+    dtype: str
+    type: sequence
+    splitter: ^
+    max_len: 50
+    share_embedding: item_id
+    padding: pre
+    na_value: ''
+  - name: neg_items
+    active: false
+    dtype: str
+    type: sequence
+    splitter: ^
+    max_len: 50
+    share_embedding: item_id
+    padding: pre
+    na_value: ''
+  label_col:
+    name: is_click
+    dtype: float

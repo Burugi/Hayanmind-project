@@ -42,7 +42,7 @@ class Tokenizer(object):
         max_len = 0
         word_counts = Counter()
         with ProcessPoolExecutor(max_workers=(mp.cpu_count() // 2)) as executor:
-            chunk_size = 1000000
+            chunk_size = 100000
             tasks = []
             for idx in range(0, len(series), chunk_size):
                 data_chunk = series.iloc[idx: (idx + chunk_size)]

@@ -1,0 +1,26 @@
+learning_rate:
+  type: loguniform
+  low: 1.0e-4
+  high: 5.0e-3
+embedding_dim:
+  type: categorical
+  choices: [16, 32, 64]
+num_wukong_layers:
+  type: categorical
+  choices: [2, 3, 4]
+fmp_rank_k:
+  type: categorical
+  choices: [4, 8, 16]
+mlp_hidden_units:
+  type: categorical
+  choices:
+    - [256, 128]
+    - [512, 256]
+    - [1024, 512]
+net_dropout:
+  type: uniform
+  low: 0.0
+  high: 0.5
+batch_size:
+  type: categorical
+  choices: [2048, 4096, 8192]

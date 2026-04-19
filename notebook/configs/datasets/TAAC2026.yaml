@@ -1,0 +1,579 @@
+TAAC2026:
+    data_root: ../data/
+    data_format: parquet
+    train_data: ../data/TAAC2026/train.parquet
+    valid_data: ../data/TAAC2026/valid.parquet
+    test_data: ../data/TAAC2026/test.parquet
+
+# TAAC2026:
+#   data_root: ../data/
+#   data_format: csv
+#   train_data: ../data/raw_data/TAAC2026_split/train.csv
+#   valid_data: ../data/raw_data/TAAC2026_split/valid.csv
+#   test_data: ../data/raw_data/TAAC2026/test.csv
+#   min_categr_count: 1
+#   feature_cols:
+#   - name: user_id
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_id
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: timestamp
+#     active: true
+#     dtype: float
+#     type: numeric
+#   - name: user_int_feats_1
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_3
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_4
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_48
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_49
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_50
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_51
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_52
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_53
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_54
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_55
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_56
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_57
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_58
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_59
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_82
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_86
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_92
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_93
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_94
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_95
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_96
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_97
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_98
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_99
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_100
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_101
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_102
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_103
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_104
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_105
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_106
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_107
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_108
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_109
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_5
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_6
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_7
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_8
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_9
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_10
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_12
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_13
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_16
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_81
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_83
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_84
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: item_int_feats_85
+#     active: true
+#     dtype: str
+#     type: categorical
+#   - name: user_int_feats_15
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 15
+#     na_value: ''
+#   - name: user_int_feats_60
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 15
+#     na_value: ''
+#   - name: user_int_feats_80
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 15
+#     na_value: ''
+#   - name: item_int_feats_11
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 20
+#     na_value: ''
+#   - name: domain_a_seq_38
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_a_seq_39
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_a_seq_40
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_a_seq_41
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_a_seq_42
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_a_seq_43
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_a_seq_44
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_a_seq_45
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_a_seq_46
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_67
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_68
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_69
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_70
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_71
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_72
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_73
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_74
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_75
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_76
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_77
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_78
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_79
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_b_seq_88
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_27
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_28
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_29
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_30
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_31
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_32
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_33
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_34
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_35
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_36
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_37
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_c_seq_47
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_d_seq_17
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_d_seq_18
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_d_seq_19
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_d_seq_20
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_d_seq_21
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_d_seq_22
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_d_seq_23
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_d_seq_24
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_d_seq_25
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: domain_d_seq_26
+#     active: true
+#     dtype: str
+#     type: sequence
+#     splitter: ^
+#     max_len: 50
+#     na_value: ''
+#   - name: fid_61
+#     active: true
+#     dtype: str
+#     type: categorical
+#     pretrained_emb: ../data/raw_data/TAAC2026/fid_61_k4.h5
+#     embedding_dim: 256
+#     freeze_emb: true
+#   - name: fid_87
+#     active: true
+#     dtype: str
+#     type: categorical
+#     pretrained_emb: ../data/raw_data/TAAC2026/fid_87_k6.h5
+#     embedding_dim: 320
+#     freeze_emb: true
+#   label_col:
+#     name: label
+#     dtype: float

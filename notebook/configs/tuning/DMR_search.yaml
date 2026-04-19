@@ -1,0 +1,29 @@
+learning_rate:
+  type: loguniform
+  low: 1.0e-4
+  high: 5.0e-3
+embedding_dim:
+  type: categorical
+  choices: [16, 32, 64]
+dnn_hidden_units:
+  type: categorical
+  choices:
+    - [512, 256, 128]
+    - [1024, 512, 256]
+enable_u2i_rel:
+  type: categorical
+  choices: [true, false]
+enable_i2i_rel:
+  type: categorical
+  choices: [true, false]
+attention_dropout:
+  type: uniform
+  low: 0.0
+  high: 0.3
+net_dropout:
+  type: uniform
+  low: 0.0
+  high: 0.5
+batch_size:
+  type: categorical
+  choices: [2048, 4096, 8192]

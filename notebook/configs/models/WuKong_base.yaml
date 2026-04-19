@@ -1,0 +1,42 @@
+Base:
+    num_workers: 3
+    verbose: 1
+    early_stop_patience: 2
+    pickle_feature_encoder: True
+    save_best_only: True
+    eval_steps: null
+    debug_mode: False
+    group_id: null
+    use_features: null
+    # Wukong은 sequence 전용 attention이 아니므로 default pooling(MaskedAveragePooling) 사용.
+    feature_specs: null
+    feature_config: null
+
+WuKong:
+    model: WuKong
+    task: binary_classification
+    loss: binary_crossentropy
+    metrics: ['AUC', 'logloss']
+    optimizer: adam
+    learning_rate: 1.0e-3
+    embedding_regularizer: 0
+    net_regularizer: 0
+    batch_size: 4096
+    embedding_dim: 40
+    num_wukong_layers: 3
+    lcb_features: 40
+    fmb_features: 40
+    fmb_mlp_units: [512, 256]
+    fmb_mlp_activations: relu
+    fmp_rank_k: 8
+    mlp_hidden_units: [512, 256]
+    mlp_hidden_activations: relu
+    mlp_batch_norm: True
+    layer_norm: True
+    net_dropout: 0
+    epochs: 20
+    shuffle: True
+    seed: 2026
+    monitor: AUC
+    monitor_mode: max
+    gpu: 0

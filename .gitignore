@@ -1,6 +1,8 @@
 # Dataset
 data/raw_data/
 data/AmazonElectronics_x1/
+data/TAAC2026/
+data/KuaiVideo_x1/
 notebook/artifacts/
 
 # Byte-compiled / optimized / DLL files

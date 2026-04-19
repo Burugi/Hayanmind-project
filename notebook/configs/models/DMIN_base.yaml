@@ -1,0 +1,84 @@
+Base:
+    num_workers: 3
+    verbose: 1
+    early_stop_patience: 2
+    pickle_feature_encoder: True
+    save_best_only: True
+    eval_steps: null
+    debug_mode: False
+    group_id: null
+    use_features: null
+    feature_config: null
+    # DMIN도 multi-head self-attention을 raw 시퀀스에 적용하므로 pre-pooling 제거.
+    feature_specs:
+        - {name: item_history, feature_encoder: null}
+        - {name: cate_history, feature_encoder: null}
+
+DMIN:
+    model: DMIN
+    task: binary_classification
+    loss: binary_crossentropy
+    metrics: ['AUC', 'logloss']
+    optimizer: adam
+    learning_rate: 1.0e-3
+    embedding_regularizer: 0
+    net_regularizer: 0
+    batch_size: 4096
+    embedding_dim: 40
+    dnn_hidden_units: [1024, 512, 256]
+    dnn_activations: Dice
+    net_dropout: 0
+    aux_hidden_units: [100, 50]
+    aux_activation: ReLU
+    # (item_id, cate_id) / (item_history, cate_history) 그룹. 다른 데이터셋은 교체.
+    target_field:
+        - !!python/tuple [item_id, cate_id]
+    sequence_field:
+        - !!python/tuple [item_history, cate_history]
+    neg_seq_field: null
+    enable_sum_pooling: False
+    use_behavior_refiner: True
+    num_heads: 4
+    attention_hidden_units: [80, 40]
+    attention_activation: ReLU
+    attention_dropout: 0
+    aux_loss_lambda: 0
+    use_pos_emb: True
+    pos_emb_dim: 8
+    batch_norm: False
+    bn_only_once: False
+    layer_norm: True
+    epochs: 20
+    shuffle: True
+    seed: 2026
+    monitor: AUC
+    monitor_mode: max
+    gpu: 0
+
+# ---------------------------------------------------------------------------
+# Dataset-specific overrides (see DIN_base.yaml 주석 참조).
+# ---------------------------------------------------------------------------
+
+Base@TaobaoAd_x1:
+    feature_specs:
+        - {name: click_sequence, feature_encoder: null}
+DMIN@TaobaoAd_x1:
+    target_field: adgroup_id
+    sequence_field: click_sequence
+
+Base@KuaiVideo_x1:
+    feature_specs:
+        - {name: pos_items, feature_encoder: null}
+DMIN@KuaiVideo_x1:
+    target_field: item_id
+    sequence_field: pos_items
+
+Base@MicroVideo1.7M_x1:
+    feature_specs:
+        - {name: clicked_items, feature_encoder: null}
+        - {name: clicked_categories, feature_encoder: null}
+DMIN@MicroVideo1.7M_x1:
+    target_field:
+        - !!python/tuple [item_id, cate_id]
+    sequence_field:
+        - !!python/tuple [clicked_items, clicked_categories]
